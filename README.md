@@ -1,7 +1,7 @@
 Benjamin Tanguay: Project Manager\
 Jonathon Mathieu: Designer\
 Jackson Hooper: Developer\
-Marc Scully: Developer\
+Marc Scully: Developer
 
 
 # Problem Statement Draft 1:
