@@ -11,3 +11,21 @@ Students often utilize online calendars to organize their schedules, but the cur
 # Problem Statement Draft 2:
 
 Students do not have a platform with an easily navigable user interface to organize their tasks, homework, and other events. For example, if a student has homework due at midnight and a basketball game at 5 pm, both of these events appear to have the same priority on most task schedulers. Prior solutions include using Google Calendar to keep track of their tasks and events, as well as when and where they are. Some difficulties in these prior solutions are that they cannot prioritize tasks, make tasks difficult to view by types (homework vs event), and have an interface that can be overwhelming and can result in a student forgetting a homework assignment. How can a task organizer prioritize tasks, make tasks easy to view by types (homework vs event), and have an interface that allows students to ensure they turn in work on time?
+
+# Installation Instructions
+
+Clone the Repository:
+
+    Git clone https://github.com/COS420-S2025/TeamB.git
+
+Navigate to Project Folder:
+
+    cd TeamB
+
+Install Dependencies:
+
+    npm Install
+
+Run program:
+
+    npm start
