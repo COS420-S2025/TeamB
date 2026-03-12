@@ -1,38 +1,384 @@
-.App {
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  background: #e5e5e5;
+}
+
+.bee-app {
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: #e5e5e5;
+}
+
+/* Header */
+.bee-header {
+  background: #ffd54f;
+  padding: 1rem 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.bee-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.bee-header-back {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+}
+
+.bee-header-logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  flex: 1;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.bee-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.bee-header-btn {
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.App-header {
-  background-color: #282c34;
+.bee-header-calendar {
+  font-size: 1rem;
+}
+
+.bee-icon {
+  font-size: 1.25rem;
+  margin-left: 0.25rem;
+}
+
+/* Screen layout */
+.bee-screen {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.bee-content {
+  flex: 1;
+  padding: 1.5rem 1rem;
+  background: #e5e5e5;
+}
+
+/* Events list */
+.bee-btn-new {
+  width: 100%;
+  background: #d32f2f !important;
+  color: white !important;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.bee-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bee-event-card {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bee-event-high {
+  background: #ffb74d !important;
+  color: #1a1a1a;
+}
+
+.bee-event-normal {
+  background: #81c784 !important;
+  color: #1a1a1a;
+}
+
+.bee-event-delete {
+  background: #e0e0e0 !important;
+  color: #333;
+}
+
+.bee-footer-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.bee-link {
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+}
+
+.bee-link:hover {
+  color: #0d47a1;
+}
+
+/* Screen titles */
+.bee-screen-title {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+/* Event form */
+.bee-form-icon {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #666;
+}
+
+.bee-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bee-input {
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+}
+
+.bee-input-wide {
+  min-height: 48px;
+}
+
+.bee-submit-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #4caf50;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  align-self: center;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+}
+
+.bee-submit-btn:hover {
+  background: #43a047;
+}
+
+/* Event details */
+.bee-event-detail-title {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+.bee-btn-edit {
+  width: 100%;
+  background: #d32f2f !important;
+  color: white !important;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+}
+
+.bee-reminder-toggle {
+  margin-bottom: 1rem;
+}
+
+.bee-reminder-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.bee-reminder-toggle input {
+  width: 18px;
+  height: 18px;
+}
+
+.bee-detail-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.bee-detail-fields label {
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 0.5rem;
+}
+
+.bee-detail-fields label:first-child {
+  margin-top: 0;
+}
+
+/* Calendar */
+.bee-calendar-title {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.bee-calendar {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bee-calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.bee-calendar-day-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  text-align: center;
+  padding: 0.25rem 0;
+}
+
+.bee-calendar-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.bee-calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  background: #f5f5f5;
+  border-radius: 6px;
+  color: #333;
+}
+
+.bee-calendar-cell:empty {
+  background: transparent;
+}
+
+/* Invite form */
+.bee-invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bee-invite-form label {
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 0.5rem;
+}
+
+.bee-invite-form label:first-of-type {
+  margin-top: 0;
+}
+
+/* Settings */
+.bee-settings-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bee-settings-btn {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.bee-settings-btn:hover {
+  background: #f9f9f9;
+}
+
+/* Home */
+.bee-home-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  min-height: 60vh;
+  text-align: center;
 }
 
-.App-link {
-  color: #61dafb;
+.bee-home-title {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.bee-home-subtitle {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 2rem;
+}
+
+.bee-btn-primary {
+  background: #ffd54f !important;
+  color: #1a1a1a !important;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 213, 79, 0.5);
+}
+
+.bee-btn-primary:hover {
+  background: #ffca28 !important;
 }
