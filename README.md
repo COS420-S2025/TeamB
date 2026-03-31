@@ -31,3 +31,5 @@ Install Dependencies:
 Run program:
 
     npm start
+
+There was AI used in the creation of this project
