@@ -353,6 +353,18 @@
   justify-content: center;
 }
 
+.badge-now {
+  background: #e74c3c;
+}
+
+.badge-mid {
+  background: #f1a23c;
+}
+
+.badge-late {
+  background: #3aa655;
+}
+
 /* priority banners */
 .priority-banner {
   width: 100%;

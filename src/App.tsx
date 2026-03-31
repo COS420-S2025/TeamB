@@ -193,7 +193,7 @@ function App() {
   });
   const canWaitEvents = events.filter((event) => getImportanceValue(event.importance) <= 3);
 
-  const renderPriorityEvents = (priorityEvents) => {
+  const renderPriorityEvents = (priorityEvents, badgeClassName) => {
     if (priorityEvents.length === 0) {
       return <p className="empty-priority-text">No events yet.</p>;
     }
@@ -206,7 +206,7 @@ function App() {
       >
         <div className="event-card-header">
           <span>{event.eventName}</span>
-          <span className="badge">{event.importance}</span>
+          <span className={`badge ${badgeClassName}`}>{event.importance}</span>
         </div>
         {expandedEventId === event.id ? (
           <div className="event-card-details">
@@ -302,7 +302,7 @@ function App() {
             Do Now
           </section>
           <section className="priority-content">
-            {renderPriorityEvents(doNowEvents)}
+            {renderPriorityEvents(doNowEvents, 'badge-now')}
           </section>
 
           {/* middle yellow section */}
@@ -310,7 +310,7 @@ function App() {
             Something To Think About
           </section>
           <section className="priority-content">
-            {renderPriorityEvents(thinkAboutEvents)}
+            {renderPriorityEvents(thinkAboutEvents, 'badge-mid')}
           </section>
 
           {/* bottom green section */}
@@ -318,7 +318,7 @@ function App() {
             You Can Wait
           </section>
           <section className="priority-content">
-            {renderPriorityEvents(canWaitEvents)}
+            {renderPriorityEvents(canWaitEvents, 'badge-late')}
           </section>
         </main>
       </div>
