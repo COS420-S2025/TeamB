@@ -1,10 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 type AddEventProps = {
   onBack: () => void;
+  onCreateEvent: (event: {
+    importance: string;
+    eventType: string;
+    eventName: string;
+    eventTime: string;
+    eventLocation: string;
+  }) => void;
 };
 
-const AddEvent: React.FC<AddEventProps> = ({ onBack }) => {
+const AddEvent: React.FC<AddEventProps> = ({ onBack, onCreateEvent }) => {
+  const [importance, setImportance] = useState('');
+  const [eventType, setEventType] = useState('');
+  const [eventName, setEventName] = useState('');
+  const [eventTime, setEventTime] = useState('');
+  const [eventLocation, setEventLocation] = useState('');
+
+  const handleClear = () => {
+    setImportance('');
+    setEventType('');
+    setEventName('');
+    setEventTime('');
+    setEventLocation('');
+  };
+
+  const handleCreateEvent = () => {
+    const trimmedImportance = importance.trim();
+    const trimmedEventType = eventType.trim();
+    const trimmedEventName = eventName.trim();
+    const trimmedEventTime = eventTime.trim();
+    const trimmedEventLocation = eventLocation.trim();
+
+    if (
+      !trimmedImportance ||
+      !trimmedEventType ||
+      !trimmedEventName ||
+      !trimmedEventTime ||
+      !trimmedEventLocation
+    ) {
+      return;
+    }
+
+    onCreateEvent({
+      importance: trimmedImportance,
+      eventType: trimmedEventType,
+      eventName: trimmedEventName,
+      eventTime: trimmedEventTime,
+      eventLocation: trimmedEventLocation
+    });
+    handleClear();
+    onBack();
+  };
+
   return (
     <div className="app">
       <header className="header">
@@ -30,6 +79,8 @@ const AddEvent: React.FC<AddEventProps> = ({ onBack }) => {
             <input
               className="field-input-pill"
               placeholder="Enter Number Here"
+              value={importance}
+              onChange={(event) => setImportance(event.target.value)}
             />
           </div>
 
@@ -38,25 +89,41 @@ const AddEvent: React.FC<AddEventProps> = ({ onBack }) => {
             <input
               className="field-input-pill"
               placeholder="Enter Type Here"
+              value={eventType}
+              onChange={(event) => setEventType(event.target.value)}
             />
           </div>
 
           <div className="field-group">
             <div className="field-label-pill">Event Name/Time/Location:</div>
-            <div className="field-row">
-              <input
-                className="field-input-small"
-                placeholder="Enter Name:"
-              />
-              <input className="field-input-small" placeholder="Time:" />
-            </div>
+            <input
+              className="field-input-pill"
+              placeholder="Enter Name:"
+              value={eventName}
+              onChange={(event) => setEventName(event.target.value)}
+            />
+            <input
+              className="field-input-pill"
+              placeholder="Time:"
+              value={eventTime}
+              onChange={(event) => setEventTime(event.target.value)}
+            />
             <input
               className="field-input-pill"
               placeholder="Enter Location:"
+              value={eventLocation}
+              onChange={(event) => setEventLocation(event.target.value)}
             />
           </div>
 
-          <button className="check-button">✓</button>
+          <div className="event-action-row">
+            <button className="clear-button" onClick={handleClear}>
+              Clear
+            </button>
+            <button className="check-button" onClick={handleCreateEvent}>
+              ✓
+            </button>
+          </div>
         </section>
       </main>
     </div>
