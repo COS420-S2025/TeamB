@@ -32,4 +32,4 @@ Run program:
 
     npm start
 
-There was AI used in the creation of this project
+AI was used in the creation of this project
