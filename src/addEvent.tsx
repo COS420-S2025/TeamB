@@ -59,15 +59,21 @@ const AddEvent: React.FC<AddEventProps> = ({ onBack, onCreateEvent }) => {
       <header className="header">
         <div className="header-title">Busy Bee Calendar</div>
         <div className="header-icons">
-          <button className="icon-button">+</button>
-          <button className="icon-button">&#8681;</button>
-          <button className="icon-button">-</button>
+          <button type="button" className="icon-button" aria-label="Add event (decorative)">
+            +
+          </button>
+          <button type="button" className="icon-button" aria-label="Download (decorative)">
+            &#8681;
+          </button>
+          <button type="button" className="icon-button" aria-label="Remove (decorative)">
+            -
+          </button>
         </div>
         <div className="header-bee">🐝</div>
       </header>
 
       <main className="screen">
-        <button className="back-button" onClick={onBack}>
+        <button type="button" className="back-button" aria-label="Back to calendar" onClick={onBack}>
           &#8630;
         </button>
 
@@ -117,10 +123,10 @@ const AddEvent: React.FC<AddEventProps> = ({ onBack, onCreateEvent }) => {
           </div>
 
           <div className="event-action-row">
-            <button className="clear-button" onClick={handleClear}>
+            <button type="button" className="clear-button" onClick={handleClear}>
               Clear
             </button>
-            <button className="check-button" onClick={handleCreateEvent}>
+            <button type="button" className="check-button" aria-label="Create event" onClick={handleCreateEvent}>
               ✓
             </button>
           </div>

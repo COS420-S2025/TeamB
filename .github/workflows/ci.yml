@@ -4,9 +4,11 @@ on:
   push:
     branches: ["main"]
   pull_request:
+    branches: ["main"]
 
 jobs:
   test-and-build:
+    name: Test and Build
     runs-on: ubuntu-latest
     strategy:
       matrix:

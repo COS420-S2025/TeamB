@@ -8,8 +8,11 @@ declare global {
   }
 }
 
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 const GOOGLE_SCRIPT_ID = 'google-identity-services';
+
+function getGoogleClientId() {
+  return process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
+}
 
 function decodeJwt(credential) {
   try {
@@ -37,7 +40,8 @@ function App() {
   const profileMenuRef = useRef(null);
 
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) {
+    const clientId = getGoogleClientId();
+    if (!clientId) {
       setGoogleError(
         'Google Sign-In is not configured. Set REACT_APP_GOOGLE_CLIENT_ID in your environment.'
       );
@@ -65,7 +69,7 @@ function App() {
       }
 
       window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
+        client_id: clientId,
         callback: (response) => {
           if (!response.credential) {
             setGoogleError('Google Sign-In failed. Please try again.');
@@ -254,13 +258,19 @@ function App() {
           <div className="header-title">Busy Bee Calendar</div>
           <div className="header-icons">
             <button
+              type="button"
               className="icon-button"
+              aria-label="Add event"
               onClick={() => setShowAddEvent(true)}
             >
               +
             </button>
-            <button className="icon-button">&#8681;</button>
-            <button className="icon-button">-</button>
+            <button type="button" className="icon-button" aria-label="Download">
+              &#8681;
+            </button>
+            <button type="button" className="icon-button" aria-label="Remove or minimize">
+              -
+            </button>
           </div>
           <div className="header-user-controls" ref={profileMenuRef}>
             <div className="header-bee">🐝</div>
