@@ -14,20 +14,7 @@ function getGoogleClientId() {
   return process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 }
 
-function decodeJwt(credential) {
-  try {
-    const payload = credential.split('.')[1];
-    if (!payload) {
-      return null;
-    }
 
-    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const decoded = atob(normalized);
-    return JSON.parse(decoded);
-  } catch (error) {
-    return null;
-  }
-}
 
 function App() {
   const [showAddEvent, setShowAddEvent] = useState(false);
@@ -191,10 +178,7 @@ function App() {
   };
 
   const doNowEvents = events.filter((event) => getImportanceValue(event.importance) >= 8);
-  const thinkAboutEvents = events.filter((event) => {
-    const value = getImportanceValue(event.importance);
-    return value >= 4 && value <= 7;
-  });
+  const thinkAboutEvents = events.filter((event) => getImportanceValue(event.importance) >= 4 && getImportanceValue(event.importance) <= 7);
   const canWaitEvents = events.filter((event) => getImportanceValue(event.importance) <= 3);
 
   const renderPriorityEvents = (priorityEvents, badgeClassName) => {
