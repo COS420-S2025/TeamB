@@ -179,6 +179,7 @@ function App() {
 
   const doNowEvents = events.filter((event) => getImportanceValue(event.importance) >= 8);
   const thinkAboutEvents = events.filter((event) => getImportanceValue(event.importance) >= 4 && getImportanceValue(event.importance) <= 7);
+
   const canWaitEvents = events.filter((event) => getImportanceValue(event.importance) <= 3);
 
   const renderPriorityEvents = (priorityEvents, badgeClassName) => {
