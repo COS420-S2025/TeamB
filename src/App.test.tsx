@@ -82,6 +82,7 @@ async function renderAppAndSignIn() {
 describe('App', () => {
   beforeEach(() => {
     process.env.REACT_APP_GOOGLE_CLIENT_ID = 'test-google-client-id';
+    window.location.hash = '#/';
     installGoogleMock();
   });
 
@@ -236,5 +237,69 @@ describe('App', () => {
     expect(screen.getByText(/type:/i).parentElement).toHaveTextContent('Homework');
     expect(screen.getByText(/time:/i).parentElement).toHaveTextContent('Tonight');
     expect(screen.getByText(/location:/i).parentElement).toHaveTextContent('Home');
+  });
+
+  it('opens settings from the bee link and switches between settings panels', async () => {
+    await renderAppAndSignIn();
+
+    act(() => {
+      window.location.hash = '#/settings';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    expect(screen.getByText('Settings')).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: /account settings/i })).toBeInTheDocument();
+    expect(screen.getByText(/signed in as test user/i)).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /colorblind settings/i })
+    );
+    expect(screen.getByRole('heading', { name: /colorblind settings/i })).toBeInTheDocument();
+    expect(
+      screen.getByText(/toggle a color profile to update task priority colors/i)
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /account settings/i }));
+    expect(screen.getByRole('heading', { name: /account settings/i })).toBeInTheDocument();
+  });
+
+  it('updates task priority colors when colorblind toggles change', async () => {
+    await renderAppAndSignIn();
+
+    act(() => {
+      window.location.hash = '#/settings';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+
+    const appRoot = document.querySelector('.app-root') as HTMLElement;
+    expect(appRoot).not.toBeNull();
+
+    expect(appRoot.style.getPropertyValue('--priority-now-color')).toBe('#e74c3c');
+    expect(appRoot.style.getPropertyValue('--priority-mid-color')).toBe('#f1a23c');
+    expect(appRoot.style.getPropertyValue('--priority-late-color')).toBe('#3aa655');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /colorblind settings/i })
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /deuteranopia/i }));
+    expect(appRoot.style.getPropertyValue('--priority-now-color')).toBe('#d55e00');
+    expect(appRoot.style.getPropertyValue('--priority-mid-color')).toBe('#f0e442');
+    expect(appRoot.style.getPropertyValue('--priority-late-color')).toBe('#009e73');
+
+    await userEvent.click(screen.getByRole('button', { name: /protanopia/i }));
+    expect(appRoot.style.getPropertyValue('--priority-now-color')).toBe('#c44e52');
+    expect(appRoot.style.getPropertyValue('--priority-mid-color')).toBe('#e3c700');
+    expect(appRoot.style.getPropertyValue('--priority-late-color')).toBe('#4caf50');
+
+    await userEvent.click(screen.getByRole('button', { name: /tritanopia/i }));
+    expect(appRoot.style.getPropertyValue('--priority-now-color')).toBe('#e15759');
+    expect(appRoot.style.getPropertyValue('--priority-mid-color')).toBe('#edc948');
+    expect(appRoot.style.getPropertyValue('--priority-late-color')).toBe('#59a14f');
+
+    await userEvent.click(screen.getByRole('button', { name: /default colors/i }));
+    expect(appRoot.style.getPropertyValue('--priority-now-color')).toBe('#e74c3c');
+    expect(appRoot.style.getPropertyValue('--priority-mid-color')).toBe('#f1a23c');
+    expect(appRoot.style.getPropertyValue('--priority-late-color')).toBe('#3aa655');
   });
 });
