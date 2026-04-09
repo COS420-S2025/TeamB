@@ -14,7 +14,20 @@ function getGoogleClientId() {
   return process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 }
 
+function decodeJwt(credential) {
+  try {
+    const payload = credential.split('.')[1];
+    if (!payload) {
+      return null;
+    }
 
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = atob(normalized);
+    return JSON.parse(decoded);
+  } catch (error) {
+    return null;
+  }
+}
 
 function App() {
   const [showAddEvent, setShowAddEvent] = useState(false);
