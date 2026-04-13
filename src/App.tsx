@@ -10,6 +10,38 @@ declare global {
 
 const GOOGLE_SCRIPT_ID = 'google-identity-services';
 
+const SETTINGS_PANELS = {
+  account: 'account',
+  colorblind: 'colorblind'
+};
+
+const COLOR_PROFILES = {
+  default: {
+    label: 'Default colors',
+    now: '#e74c3c',
+    mid: '#f1a23c',
+    late: '#3aa655'
+  },
+  deuteranopia: {
+    label: 'Deuteranopia',
+    now: '#d55e00',
+    mid: '#f0e442',
+    late: '#009e73'
+  },
+  protanopia: {
+    label: 'Protanopia',
+    now: '#c44e52',
+    mid: '#e3c700',
+    late: '#4caf50'
+  },
+  tritanopia: {
+    label: 'Tritanopia',
+    now: '#e15759',
+    mid: '#edc948',
+    late: '#59a14f'
+  }
+};
+
 function getGoogleClientId() {
   return process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 }
@@ -22,11 +54,22 @@ function decodeJwt(credential) {
     }
 
     const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const decoded = atob(normalized);
-    return JSON.parse(decoded);
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    const decoded = atob(padded);
+    const utf8Payload = decodeURIComponent(
+      decoded
+        .split('')
+        .map((character) => `%${`00${character.charCodeAt(0).toString(16)}`.slice(-2)}`)
+        .join('')
+    );
+    return JSON.parse(utf8Payload);
   } catch (error) {
     return null;
   }
+}
+
+function getCurrentViewFromHash() {
+  return window.location.hash === '#/settings' ? 'settings' : 'calendar';
 }
 
 function App() {
@@ -36,8 +79,18 @@ function App() {
   const [googleError, setGoogleError] = useState('');
   const [user, setUser] = useState(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [currentView, setCurrentView] = useState(getCurrentViewFromHash);
+  const [isAvatarBroken, setIsAvatarBroken] = useState(false);
+  const [activeSettingsPanel, setActiveSettingsPanel] = useState(SETTINGS_PANELS.account);
+  const [colorProfile, setColorProfile] = useState('default');
   const googleButtonRef = useRef(null);
   const profileMenuRef = useRef(null);
+  const selectedColorProfile = COLOR_PROFILES[colorProfile] || COLOR_PROFILES.default;
+  const appColorVars = {
+    '--priority-now-color': selectedColorProfile.now,
+    '--priority-mid-color': selectedColorProfile.mid,
+    '--priority-late-color': selectedColorProfile.late
+  };
 
   useEffect(() => {
     const clientId = getGoogleClientId();
@@ -86,7 +139,7 @@ function App() {
           setUser({
             name: parsedUser.name || 'Google User',
             email: parsedUser.email || '',
-            picture: parsedUser.picture || ''
+            picture: parsedUser.picture || parsedUser.imageUrl || ''
           });
         }
       });
@@ -127,6 +180,21 @@ function App() {
       window.google.accounts.id.prompt();
     }
   }, [user]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentView(getCurrentViewFromHash());
+      setIsProfileMenuOpen(false);
+      setActiveSettingsPanel(SETTINGS_PANELS.account);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    setIsAvatarBroken(false);
+  }, [user?.picture]);
 
   useEffect(() => {
     if (!isProfileMenuOpen) {
@@ -191,13 +259,20 @@ function App() {
   };
 
   const doNowEvents = events.filter((event) => getImportanceValue(event.importance) >= 8);
-  const thinkAboutEvents = events.filter((event) => {
-    const value = getImportanceValue(event.importance);
-    return value >= 4 && value <= 7;
-  });
+  const thinkAboutEvents = events.filter((event) => getImportanceValue(event.importance) >= 4 && getImportanceValue(event.importance) <= 7);
   const canWaitEvents = events.filter((event) => getImportanceValue(event.importance) <= 3);
+  const colorProfileOptions = Object.entries(COLOR_PROFILES);
 
-  const renderPriorityEvents = (priorityEvents) => {
+  const handleColorProfileToggle = (profileKey) => {
+    setColorProfile((currentProfile) => {
+      if (profileKey === 'default') {
+        return 'default';
+      }
+      return currentProfile === profileKey ? 'default' : profileKey;
+    });
+  };
+
+  const renderPriorityEvents = (priorityEvents, badgeClassName) => {
     if (priorityEvents.length === 0) {
       return <p className="empty-priority-text">No events yet.</p>;
     }
@@ -210,7 +285,7 @@ function App() {
       >
         <div className="event-card-header">
           <span>{event.eventName}</span>
-          <span className="badge">{event.importance}</span>
+          <span className={`badge ${badgeClassName}`}>{event.importance}</span>
         </div>
         {expandedEventId === event.id ? (
           <div className="event-card-details">
@@ -225,7 +300,7 @@ function App() {
 
   if (!user) {
     return (
-      <div className="app-root">
+      <div className="app-root" style={appColorVars}>
         <div className="app auth-screen">
           <main className="screen auth-screen-main">
             <section className="auth-card auth-card-gated">
@@ -251,8 +326,84 @@ function App() {
     );
   }
 
+  if (currentView === 'settings') {
+    return (
+      <div className="app-root" style={appColorVars}>
+        <div className="app">
+          <header className="header">
+            <div className="header-title">Settings</div>
+            <div className="header-icons" />
+            <div className="header-user-controls">
+              <a
+                href="#/"
+                className="header-bee-link"
+                aria-label="Go back to calendar"
+                data-tooltip="Calendar"
+              >
+                🐝
+              </a>
+            </div>
+          </header>
+          <main className="screen">
+            <section className="settings-layout">
+              <aside className="settings-sidebar">
+                <button
+                  type="button"
+                  className={`settings-keyword ${activeSettingsPanel === SETTINGS_PANELS.account ? 'settings-keyword-active' : ''}`}
+                  onClick={() => setActiveSettingsPanel(SETTINGS_PANELS.account)}
+                >
+                  Account Settings
+                </button>
+                <button
+                  type="button"
+                  className={`settings-keyword ${activeSettingsPanel === SETTINGS_PANELS.colorblind ? 'settings-keyword-active' : ''}`}
+                  onClick={() => setActiveSettingsPanel(SETTINGS_PANELS.colorblind)}
+                >
+                  Colorblind settings
+                </button>
+              </aside>
+              <div className="settings-content">
+                {activeSettingsPanel === SETTINGS_PANELS.account ? (
+                  <section className="auth-card">
+                    <h2 className="auth-title">Account Settings</h2>
+                    <p className="auth-subtitle">Signed in as {user.name}</p>
+                    {user.email ? <p className="auth-text">{user.email}</p> : null}
+                  </section>
+                ) : (
+                  <section className="auth-card">
+                    <h2 className="auth-title">Colorblind settings</h2>
+                    <p className="auth-subtitle">
+                      Toggle a color profile to update task priority colors.
+                    </p>
+                    <div className="settings-toggle-list">
+                      {colorProfileOptions.map(([profileKey, profileValue]) => {
+                        const isEnabled = colorProfile === profileKey;
+                        return (
+                          <button
+                            key={profileKey}
+                            type="button"
+                            className={`settings-toggle ${isEnabled ? 'settings-toggle-enabled' : ''}`}
+                            onClick={() => handleColorProfileToggle(profileKey)}
+                            aria-pressed={isEnabled}
+                          >
+                            <span>{profileValue.label}</span>
+                            <span className="settings-toggle-pill">{isEnabled ? 'On' : 'Off'}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="app-root">
+    <div className="app-root" style={appColorVars}>
       <div className="app">
         <header className="header">
           <div className="header-title">Busy Bee Calendar</div>
@@ -273,17 +424,26 @@ function App() {
             </button>
           </div>
           <div className="header-user-controls" ref={profileMenuRef}>
-            <div className="header-bee">🐝</div>
+            <a
+              href="#/settings"
+              className="header-bee-link"
+              aria-label="Open settings"
+              data-tooltip="Settings"
+            >
+              🐝
+            </a>
             <button
               className="profile-button"
               onClick={() => setIsProfileMenuOpen((open) => !open)}
               aria-label="Open account menu"
             >
-              {user.picture ? (
+              {user.picture && !isAvatarBroken ? (
                 <img
                   src={user.picture}
                   alt={`${user.name} profile`}
                   className="profile-avatar"
+                  referrerPolicy="no-referrer"
+                  onError={() => setIsAvatarBroken(true)}
                 />
               ) : (
                 <span className="profile-initial">
@@ -312,7 +472,7 @@ function App() {
             Do Now
           </section>
           <section className="priority-content">
-            {renderPriorityEvents(doNowEvents)}
+            {renderPriorityEvents(doNowEvents, 'badge-now')}
           </section>
 
           {/* middle yellow section */}
@@ -320,7 +480,7 @@ function App() {
             Something To Think About
           </section>
           <section className="priority-content">
-            {renderPriorityEvents(thinkAboutEvents)}
+            {renderPriorityEvents(thinkAboutEvents, 'badge-mid')}
           </section>
 
           {/* bottom green section */}
@@ -328,7 +488,7 @@ function App() {
             You Can Wait
           </section>
           <section className="priority-content">
-            {renderPriorityEvents(canWaitEvents)}
+            {renderPriorityEvents(canWaitEvents, 'badge-late')}
           </section>
         </main>
       </div>
