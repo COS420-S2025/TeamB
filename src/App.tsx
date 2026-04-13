@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import AddEvent from './addEvent.tsx';
+import { type CalendarEvent, parseIcsToEvents } from './icsImport';
 
 declare global {
   interface Window {
@@ -74,7 +75,7 @@ function getCurrentViewFromHash() {
 
 function App() {
   const [showAddEvent, setShowAddEvent] = useState(false);
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [expandedEventId, setExpandedEventId] = useState(null);
   const [googleError, setGoogleError] = useState('');
   const [user, setUser] = useState(null);
@@ -85,6 +86,7 @@ function App() {
   const [colorProfile, setColorProfile] = useState('default');
   const googleButtonRef = useRef(null);
   const profileMenuRef = useRef(null);
+  const icsInputRef = useRef<HTMLInputElement | null>(null);
   const selectedColorProfile = COLOR_PROFILES[colorProfile] || COLOR_PROFILES.default;
   const appColorVars = {
     '--priority-now-color': selectedColorProfile.now,
@@ -244,6 +246,42 @@ function App() {
       ...previousEvents,
       { ...newEvent, id: Date.now().toString() }
     ]);
+  };
+
+  const handleImportIcsClick = () => {
+    icsInputRef.current?.click();
+  };
+
+  const handleImportIcsFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const imported = parseIcsToEvents(text);
+
+      if (imported.length === 0) {
+        window.alert('No events found in that .ics file.');
+        return;
+      }
+
+      const base = Date.now();
+      setEvents((previousEvents) => [
+        ...previousEvents,
+        ...imported.map((importedEvent, index) => ({
+          ...importedEvent,
+          id: `${base}-${index}`
+        }))
+      ]);
+
+      window.alert(`Imported ${imported.length} event${imported.length === 1 ? '' : 's'}.`);
+    } catch (error) {
+      window.alert('Unable to import that .ics file.');
+    }
   };
 
   const toggleEventExpanded = (eventId) => {
@@ -416,13 +454,20 @@ function App() {
             >
               +
             </button>
-            <button type="button" className="icon-button" aria-label="Download">
+            <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
               &#8681;
             </button>
             <button type="button" className="icon-button" aria-label="Remove or minimize">
               -
             </button>
           </div>
+          <input
+            ref={icsInputRef}
+            type="file"
+            accept=".ics,text/calendar"
+            style={{ display: 'none' }}
+            onChange={handleImportIcsFile}
+          />
           <div className="header-user-controls" ref={profileMenuRef}>
             <a
               href="#/settings"
