@@ -9,10 +9,12 @@ declare global {
 }
 
 const GOOGLE_SCRIPT_ID = 'google-identity-services';
+
 const SETTINGS_PANELS = {
   account: 'account',
   colorblind: 'colorblind'
 };
+
 const COLOR_PROFILES = {
   default: {
     label: 'Default colors',
