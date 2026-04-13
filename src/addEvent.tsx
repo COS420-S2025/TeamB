@@ -126,7 +126,7 @@ const AddEvent: React.FC<AddEventProps> = ({ onBack, onCreateEvent }) => {
             <button type="button" className="clear-button" onClick={handleClear}>
               Clear
             </button>
-            <button type="button" className="check-button" aria-label="Create event" onClick={handleCreateEvent}>
+            <button type="button" className="check-button" aria-label="Create event" onClick={handle_create_event}>
               ✓
             </button>
           </div>
