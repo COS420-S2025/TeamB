@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import AddEvent from './addEvent.tsx';
-import { type CalendarEvent, parseIcsToEvents } from './icsImport';
+import { type CalendarEvent, parseIcsToEvents } from './icsImport.ts';
 
 declare global {
   interface Window {
