@@ -185,6 +185,7 @@ function App() {
 
   useEffect(() => {
     const handleHashChange = () => {
+      setShowAddEvent(false);
       setCurrentView(getCurrentViewFromHash());
       setIsProfileMenuOpen(false);
       setActiveSettingsPanel(SETTINGS_PANELS.account);
@@ -310,6 +311,14 @@ function App() {
     });
   };
 
+  const handleOpenSettings = () => {
+    window.location.hash = '#/settings';
+    setShowAddEvent(false);
+    setCurrentView('settings');
+    setIsProfileMenuOpen(false);
+    setActiveSettingsPanel(SETTINGS_PANELS.account);
+  };
+
   const renderPriorityEvents = (priorityEvents, badgeClassName) => {
     if (priorityEvents.length === 0) {
       return <p className="empty-priority-text">No events yet.</p>;
@@ -359,6 +368,8 @@ function App() {
     return (
       <AddEvent
         onBack={() => setShowAddEvent(false)}
+        onOpenSettings={handleOpenSettings}
+        onImportIcsFile={handleImportIcsFile}
         onCreateEvent={handleCreateEvent}
       />
     );
@@ -369,8 +380,21 @@ function App() {
       <div className="app-root" style={appColorVars}>
         <div className="app">
           <header className="header">
-            <div className="header-title">Settings</div>
-            <div className="header-icons" />
+            <a href="#/" className="header-title" aria-label="Go to homepage">
+              Settings
+            </a>
+            <div className="header-icons">
+              <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
+                &#8681;
+              </button>
+            </div>
+            <input
+              ref={icsInputRef}
+              type="file"
+              accept=".ics,text/calendar"
+              style={{ display: 'none' }}
+              onChange={handleImportIcsFile}
+            />
             <div className="header-user-controls">
               <a
                 href="#/"
@@ -444,7 +468,9 @@ function App() {
     <div className="app-root" style={appColorVars}>
       <div className="app">
         <header className="header">
-          <div className="header-title">Busy Bee Calendar</div>
+          <a href="#/" className="header-title" aria-label="Go to homepage">
+            Busy Bee Calendar
+          </a>
           <div className="header-icons">
             <button
               type="button"
