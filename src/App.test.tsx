@@ -138,7 +138,7 @@ describe('App', () => {
     expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
       'Add event',
       'Download',
-      'Remove or minimize',
+      'Toggle delete mode',
       'Open account menu'
     ]);
   });
@@ -163,7 +163,9 @@ describe('App', () => {
     await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '9');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Exam');
     await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Final exam');
-    await userEvent.type(screen.getByPlaceholderText('Time:'), '3pm');
+    fireEvent.change(screen.getByLabelText('Event date and time'), {
+      target: { value: '2026-04-16T15:00' }
+    });
     await userEvent.type(screen.getByPlaceholderText('Enter Location:'), 'Hall A');
     await userEvent.click(screen.getByRole('button', { name: 'Create event' }));
 
@@ -176,6 +178,32 @@ describe('App', () => {
     const doNowBanner = screen.getByText('Do Now').closest('section');
     const doNowContent = doNowBanner?.nextElementSibling;
     expect(doNowContent).toHaveTextContent('Final exam');
+  });
+
+  it('enables the download button on calendar, add-event, and settings pages once events exist', async () => {
+    await renderAppAndSignIn();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
+    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '9');
+    await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Exam');
+    await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Final exam');
+    fireEvent.change(screen.getByLabelText('Event date and time'), {
+      target: { value: '2026-04-16T15:00' }
+    });
+    await userEvent.type(screen.getByPlaceholderText('Enter Location:'), 'Hall A');
+    await userEvent.click(screen.getByRole('button', { name: 'Create event' }));
+    await waitFor(() => expect(screen.getByText('Final exam')).toBeInTheDocument());
+
+    expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
+    expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
+
+    act(() => {
+      window.location.hash = '#/settings';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
   });
 
   it('opens the profile menu and signs out', async () => {
@@ -224,7 +252,9 @@ describe('App', () => {
     await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '5');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Homework');
     await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Essay');
-    await userEvent.type(screen.getByPlaceholderText('Time:'), 'Tonight');
+    fireEvent.change(screen.getByLabelText('Event date and time'), {
+      target: { value: '2026-04-16T20:00' }
+    });
     await userEvent.type(screen.getByPlaceholderText('Enter Location:'), 'Home');
     await userEvent.click(screen.getByRole('button', { name: 'Create event' }));
 
@@ -235,8 +265,49 @@ describe('App', () => {
     await userEvent.click(card as HTMLElement);
 
     expect(screen.getByText(/type:/i).parentElement).toHaveTextContent('Homework');
-    expect(screen.getByText(/time:/i).parentElement).toHaveTextContent('Tonight');
+    expect(screen.getByText(/time:/i).parentElement).toHaveTextContent('2026-04-16 20:00');
     expect(screen.getByText(/location:/i).parentElement).toHaveTextContent('Home');
+  });
+
+  it('reveals delete buttons for all events when delete mode is toggled', async () => {
+    await renderAppAndSignIn();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
+    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '8');
+    await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Meeting');
+    await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Sprint sync');
+    fireEvent.change(screen.getByLabelText('Event date and time'), {
+      target: { value: '2026-04-16T09:00' }
+    });
+    await userEvent.type(screen.getByPlaceholderText('Enter Location:'), 'Room 1');
+    await userEvent.click(screen.getByRole('button', { name: 'Create event' }));
+    await waitFor(() => expect(screen.getByText('Sprint sync')).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Toggle delete mode' }));
+    expect(screen.getByRole('button', { name: 'Delete Sprint sync' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Sprint sync' }));
+    expect(screen.queryByText('Sprint sync')).not.toBeInTheDocument();
+  });
+
+  it('disables download after removing the only event', async () => {
+    await renderAppAndSignIn();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
+    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '8');
+    await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Meeting');
+    await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Planning');
+    fireEvent.change(screen.getByLabelText('Event date and time'), {
+      target: { value: '2026-04-16T11:00' }
+    });
+    await userEvent.type(screen.getByPlaceholderText('Enter Location:'), 'Room 3');
+    await userEvent.click(screen.getByRole('button', { name: 'Create event' }));
+    await waitFor(() => expect(screen.getByText('Planning')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Toggle delete mode' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Planning' }));
+    expect(screen.queryByText('Planning')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download' })).toBeDisabled();
   });
 
   it('opens settings from the bee link and switches between settings panels', async () => {
