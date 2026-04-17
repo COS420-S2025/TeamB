@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import AddEvent from './addEvent.tsx';
-import { type CalendarEvent, parseIcsToEvents } from './icsImport.ts';
+import { parseIcsToEvents } from './icsImport.ts';
 
 declare global {
   interface Window {
@@ -73,10 +73,67 @@ function getCurrentViewFromHash() {
   return window.location.hash === '#/settings' ? 'settings' : 'calendar';
 }
 
+type EventTuple = [string, number];
+
+type CalendarEvent = {
+  id: string;
+  iCalData: string;
+  importance: number;
+};
+
+type ParsedEventDetails = {
+  eventName: string;
+  eventType: string;
+  eventTime: string;
+  eventLocation: string;
+};
+
+function unescapeIcsText(value = '') {
+  return value.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
+}
+
+function formatIcsDateTimeForDisplay(icsDateTime: string) {
+  const trimmedValue = icsDateTime.trim();
+  const match = trimmedValue.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);
+  if (!match) {
+    return '';
+  }
+
+  const [, year, month, day, hour, minute] = match;
+  return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
+function parseEventDetailsFromIcs(iCalData: string): ParsedEventDetails {
+  const summaryMatch = iCalData.match(/^SUMMARY:(.*)$/m);
+  const descriptionMatch = iCalData.match(/^DESCRIPTION:(.*)$/m);
+  const categoriesMatch = iCalData.match(/^CATEGORIES:(.*)$/m);
+  const locationMatch = iCalData.match(/^LOCATION:(.*)$/m);
+  const dtStartMatch = iCalData.match(/^DTSTART(?::|;[^:]*:)(.*)$/m);
+  const descriptionContent = descriptionMatch ? descriptionMatch[1] : '';
+  const unescapedDescription = unescapeIcsText(descriptionContent);
+  const descriptionTypeMatch = unescapedDescription.match(/(?:^|\n)TYPE:(.*)(?:\n|$)/);
+  const descriptionTimeMatch = unescapedDescription.match(/(?:^|\n)TIME:(.*)(?:\n|$)/);
+  const descriptionLocationMatch = unescapedDescription.match(/(?:^|\n)LOCATION:(.*)(?:\n|$)/);
+  const timeFromDtStart = dtStartMatch ? formatIcsDateTimeForDisplay(dtStartMatch[1]) : '';
+
+  return {
+    eventName: unescapeIcsText(summaryMatch ? summaryMatch[1] : ''),
+    eventType: unescapeIcsText(categoriesMatch ? categoriesMatch[1] : (descriptionTypeMatch ? descriptionTypeMatch[1] : '')),
+    eventTime: timeFromDtStart || (descriptionTimeMatch ? descriptionTimeMatch[1] : ''),
+    eventLocation: unescapeIcsText(locationMatch ? locationMatch[1] : (descriptionLocationMatch ? descriptionLocationMatch[1] : ''))
+  };
+}
+
+function getVEventBlock(iCalData: string) {
+  const eventBlockMatch = iCalData.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/);
+  return eventBlockMatch ? eventBlockMatch[0] : '';
+}
+
 function App() {
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [expandedEventId, setExpandedEventId] = useState(null);
+  const [isDeleteModeEnabled, setIsDeleteModeEnabled] = useState(false);
   const [googleError, setGoogleError] = useState('');
   const [user, setUser] = useState(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -242,10 +299,11 @@ function App() {
     setUser(null);
   };
 
-  const handleCreateEvent = (newEvent) => {
+  const handleCreateEvent = (newEvent: EventTuple) => {
+    const [iCalData, importance] = newEvent;
     setEvents((previousEvents) => [
       ...previousEvents,
-      { ...newEvent, id: Date.now().toString() }
+      { id: Date.now().toString(), iCalData, importance }
     ]);
   };
 
@@ -289,17 +347,50 @@ function App() {
     setExpandedEventId((currentId) => (currentId === eventId ? null : eventId));
   };
 
-  const getImportanceValue = (importance) => {
-    const parsedValue = Number(importance);
-    if (Number.isNaN(parsedValue)) {
-      return 0;
-    }
-    return parsedValue;
+  const handleRemoveEvent = (eventId: string) => {
+    setEvents((previousEvents) => previousEvents.filter((event) => event.id !== eventId));
+    setExpandedEventId((currentId) => (currentId === eventId ? null : currentId));
   };
 
-  const doNowEvents = events.filter((event) => getImportanceValue(event.importance) >= 8);
-  const thinkAboutEvents = events.filter((event) => getImportanceValue(event.importance) >= 4 && getImportanceValue(event.importance) <= 7);
-  const canWaitEvents = events.filter((event) => getImportanceValue(event.importance) <= 3);
+  const toggleDeleteMode = () => {
+    setIsDeleteModeEnabled((currentValue) => !currentValue);
+  };
+
+  const handleDownloadEvents = () => {
+    if (events.length === 0) {
+      return;
+    }
+
+    const eventBlocks = events
+      .map((event) => getVEventBlock(event.iCalData))
+      .filter((eventBlock) => eventBlock);
+
+    if (eventBlocks.length === 0) {
+      return;
+    }
+
+    const mergedIcsData = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Busy Bee Calendar//EN',
+      ...eventBlocks,
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const icsBlob = new Blob([mergedIcsData], { type: 'text/calendar;charset=utf-8' });
+    const downloadUrl = URL.createObjectURL(icsBlob);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = downloadUrl;
+    downloadLink.download = 'busy-bee-events.ics';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(downloadUrl);
+  };
+
+  const doNowEvents = events.filter((event) => event.importance >= 8);
+  const thinkAboutEvents = events.filter((event) => event.importance >= 4 && event.importance <= 7);
+  const canWaitEvents = events.filter((event) => event.importance <= 3);
   const colorProfileOptions = Object.entries(COLOR_PROFILES);
 
   const handleColorProfileToggle = (profileKey) => {
@@ -324,25 +415,41 @@ function App() {
       return <p className="empty-priority-text">No events yet.</p>;
     }
 
-    return priorityEvents.map((event) => (
-      <div
-        className="event-pill-with-badge event-card"
-        key={event.id}
-        onClick={() => toggleEventExpanded(event.id)}
-      >
-        <div className="event-card-header">
-          <span>{event.eventName}</span>
-          <span className={`badge ${badgeClassName}`}>{event.importance}</span>
-        </div>
-        {expandedEventId === event.id ? (
-          <div className="event-card-details">
-            <p><strong>Type:</strong> {event.eventType}</p>
-            <p><strong>Time:</strong> {event.eventTime}</p>
-            <p><strong>Location:</strong> {event.eventLocation}</p>
+    return priorityEvents.map((event) => {
+      const parsedEvent = parseEventDetailsFromIcs(event.iCalData);
+      return (
+        <div
+          className="event-pill-with-badge event-card"
+          key={event.id}
+          onClick={() => toggleEventExpanded(event.id)}
+        >
+          <div className="event-card-header">
+            <span>{parsedEvent.eventName}</span>
+            <span className={`badge ${badgeClassName}`}>{event.importance}</span>
           </div>
-        ) : null}
-      </div>
-    ));
+          {isDeleteModeEnabled ? (
+            <button
+              type="button"
+              className="event-delete-button"
+              onClick={(eventClick) => {
+                eventClick.stopPropagation();
+                handleRemoveEvent(event.id);
+              }}
+              aria-label={`Delete ${parsedEvent.eventName}`}
+            >
+              Delete
+            </button>
+          ) : null}
+          {expandedEventId === event.id ? (
+            <div className="event-card-details">
+              <p><strong>Type:</strong> {parsedEvent.eventType}</p>
+              <p><strong>Time:</strong> {parsedEvent.eventTime}</p>
+              <p><strong>Location:</strong> {parsedEvent.eventLocation}</p>
+            </div>
+          ) : null}
+        </div>
+      );
+    });
   };
 
   if (!user) {
@@ -371,6 +478,8 @@ function App() {
         onOpenSettings={handleOpenSettings}
         onImportIcsFile={handleImportIcsFile}
         onCreateEvent={handleCreateEvent}
+        onDownloadEvents={handleDownloadEvents}
+        canDownloadEvents={events.length > 0}
       />
     );
   }
@@ -385,6 +494,15 @@ function App() {
             </a>
             <div className="header-icons">
               <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
+                &#8681;
+              </button>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Download"
+                onClick={handleDownloadEvents}
+                disabled={events.length === 0}
+              >
                 &#8681;
               </button>
             </div>
@@ -483,7 +601,21 @@ function App() {
             <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
               &#8681;
             </button>
-            <button type="button" className="icon-button" aria-label="Remove or minimize">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Download"
+              onClick={handleDownloadEvents}
+              disabled={events.length === 0}
+            >
+              &#8681;
+            </button>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Toggle delete mode"
+              onClick={toggleDeleteMode}
+            >
               -
             </button>
           </div>

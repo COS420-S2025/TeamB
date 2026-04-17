@@ -4,28 +4,43 @@ type AddEventProps = {
   onBack: () => void;
   onOpenSettings: () => void;
   onImportIcsFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onCreateEvent: (event: {
-    importance: string;
-    eventType: string;
-    eventName: string;
-    eventTime: string;
-    eventLocation: string;
-  }) => void;
+  onCreateEvent: (event: [string, number]) => void;
+  onDownloadEvents: () => void;
+  canDownloadEvents: boolean;
 };
 
-const AddEvent: React.FC<AddEventProps> = ({ onBack, onOpenSettings, onImportIcsFile, onCreateEvent }) => {
+const AddEvent: React.FC<AddEventProps> = ({
+  onBack,
+  onOpenSettings,
+  onImportIcsFile,
+  onCreateEvent,
+  onDownloadEvents,
+  canDownloadEvents
+}) => {
   const [importance, setImportance] = useState('');
   const [eventType, setEventType] = useState('');
   const [eventName, setEventName] = useState('');
-  const [eventTime, setEventTime] = useState('');
+  const [eventDateTime, setEventDateTime] = useState('');
   const [eventLocation, setEventLocation] = useState('');
   const icsInputRef = useRef<HTMLInputElement | null>(null);
+
+  const escapeIcsText = (value: string) => value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n');
+
+  const toIcsLocalDateTime = (dateValue: string | Date) => {
+    const parsedDate = dateValue instanceof Date ? dateValue : new Date(dateValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return '';
+    }
+
+    const pad = (value: number) => `${value}`.padStart(2, '0');
+    return `${parsedDate.getFullYear()}${pad(parsedDate.getMonth() + 1)}${pad(parsedDate.getDate())}T${pad(parsedDate.getHours())}${pad(parsedDate.getMinutes())}00`;
+  };
 
   const handleClear = () => {
     setImportance('');
     setEventType('');
     setEventName('');
-    setEventTime('');
+    setEventDateTime('');
     setEventLocation('');
   };
 
@@ -33,26 +48,52 @@ const AddEvent: React.FC<AddEventProps> = ({ onBack, onOpenSettings, onImportIcs
     const trimmedImportance = importance.trim();
     const trimmedEventType = eventType.trim();
     const trimmedEventName = eventName.trim();
-    const trimmedEventTime = eventTime.trim();
+    const trimmedEventDateTime = eventDateTime.trim();
     const trimmedEventLocation = eventLocation.trim();
 
     if (
       !trimmedImportance ||
       !trimmedEventType ||
       !trimmedEventName ||
-      !trimmedEventTime ||
+      !trimmedEventDateTime ||
       !trimmedEventLocation
     ) {
       return;
     }
 
-    onCreateEvent({
-      importance: trimmedImportance,
-      eventType: trimmedEventType,
-      eventName: trimmedEventName,
-      eventTime: trimmedEventTime,
-      eventLocation: trimmedEventLocation
-    });
+    const parsedImportance = Number.parseInt(trimmedImportance, 10);
+    if (Number.isNaN(parsedImportance)) {
+      return;
+    }
+
+    const startDate = new Date(trimmedEventDateTime);
+    if (Number.isNaN(startDate.getTime())) {
+      return;
+    }
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+    const escapedEventType = escapeIcsText(trimmedEventType);
+    const escapedEventName = escapeIcsText(trimmedEventName);
+    const escapedEventLocation = escapeIcsText(trimmedEventLocation);
+    const escapedDisplayTime = escapeIcsText(startDate.toLocaleString());
+    const dtStamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+    const iCalData = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Busy Bee Calendar//EN',
+      'BEGIN:VEVENT',
+      `UID:${Date.now()}@busybee.local`,
+      `DTSTAMP:${dtStamp}`,
+      `DTSTART:${toIcsLocalDateTime(trimmedEventDateTime)}`,
+      `DTEND:${toIcsLocalDateTime(endDate)}`,
+      `SUMMARY:${escapedEventName}`,
+      `LOCATION:${escapedEventLocation}`,
+      `CATEGORIES:${escapedEventType}`,
+      `DESCRIPTION:TYPE:${escapedEventType}\\nTIME:${escapedDisplayTime}\\nLOCATION:${escapedEventLocation}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    onCreateEvent([iCalData, parsedImportance]);
     handleClear();
     onBack();
   };
@@ -77,6 +118,15 @@ const AddEvent: React.FC<AddEventProps> = ({ onBack, onOpenSettings, onImportIcs
             +
           </button>
           <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
+            &#8681;
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Download"
+            onClick={onDownloadEvents}
+            disabled={!canDownloadEvents}
+          >
             &#8681;
           </button>
           <button type="button" className="icon-button" aria-label="Remove (decorative)">
@@ -130,7 +180,7 @@ const AddEvent: React.FC<AddEventProps> = ({ onBack, onOpenSettings, onImportIcs
           </div>
 
           <div className="field-group">
-            <div className="field-label-pill">Event Name/Time/Location:</div>
+            <div className="field-label-pill">Event Name/Date Time/Location:</div>
             <input
               className="field-input-pill"
               placeholder="Enter Name:"
@@ -139,9 +189,10 @@ const AddEvent: React.FC<AddEventProps> = ({ onBack, onOpenSettings, onImportIcs
             />
             <input
               className="field-input-pill"
-              placeholder="Time:"
-              value={eventTime}
-              onChange={(event) => setEventTime(event.target.value)}
+              type="datetime-local"
+              aria-label="Event date and time"
+              value={eventDateTime}
+              onChange={(event) => setEventDateTime(event.target.value)}
             />
             <input
               className="field-input-pill"

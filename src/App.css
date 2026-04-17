@@ -454,6 +454,18 @@
   gap: 3px;
 }
 
+.event-delete-button {
+  width: 100%;
+  border: 2px solid #8f1f1f;
+  background: #e74c3c;
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .badge {
   width: 30px;
   height: 30px;
