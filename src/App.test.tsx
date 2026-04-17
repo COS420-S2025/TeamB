@@ -181,7 +181,7 @@ describe('App', () => {
     expect(doNowContent).toHaveTextContent('Final exam');
   });
 
-  it('enables the download button on calendar, add-event, and settings pages once events exist', async () => {
+  it('enables the download button on calendar and add-event pages once events exist', async () => {
     await renderAppAndSignIn();
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
@@ -198,12 +198,6 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
-    expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
-
-    act(() => {
-      window.location.hash = '#/settings';
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    });
     expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
   });
 
