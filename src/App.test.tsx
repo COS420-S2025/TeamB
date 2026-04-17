@@ -181,7 +181,7 @@ describe('App', () => {
     expect(doNowContent).toHaveTextContent('Final exam');
   });
 
-  it('enables the download button on calendar, add-event, and settings pages once events exist', async () => {
+  it('enables the download button on calendar and add-event page once events exist', async () => {
     await renderAppAndSignIn();
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
