@@ -332,8 +332,9 @@ function App() {
       setEvents((previousEvents) => [
         ...previousEvents,
         ...imported.map((importedEvent, index) => ({
-          ...importedEvent,
-          id: `${base}-${index}`
+          id: `${base}-${index}`,
+          iCalData: importedEvent.iCalData,
+          importance: importedEvent.importance
         }))
       ]);
 

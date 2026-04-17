@@ -1,13 +1,7 @@
-export type CalendarEvent = {
-  id: string;
-  importance: string;
-  eventType: string;
-  eventName: string;
-  eventTime: string;
-  eventLocation: string;
+export type ImportedCalendarEvent = {
+  iCalData: string;
+  importance: number;
 };
-
-export type ImportedCalendarEvent = Omit<CalendarEvent, 'id'>;
 
 function unfoldIcsLines(rawText: string) {
   const normalized = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -77,24 +71,45 @@ export function parseIcsToEvents(rawText: string): ImportedCalendarEvent[] {
 
   const flush = () => {
     const eventName = (current.SUMMARY || '').trim();
-    const eventLocation = (current.LOCATION || '').trim();
-    const eventType = (current.CATEGORIES || current.CATEGORY || 'Imported').trim() || 'Imported';
-    const dtStart = current.DTSTART ? formatIcsDateTime(current.DTSTART) : '';
-    const dtEnd = current.DTEND ? formatIcsDateTime(current.DTEND) : '';
 
     if (!eventName) {
       return;
     }
 
+    const eventLocation = (current.LOCATION || 'Imported').trim() || 'Imported';
+    const eventType = (current.CATEGORIES || current.CATEGORY || 'Imported').trim() || 'Imported';
+    const dtStart = current.DTSTART ? formatIcsDateTime(current.DTSTART) : '';
+    const dtEnd = current.DTEND ? formatIcsDateTime(current.DTEND) : '';
     const eventTime =
-      dtStart && dtEnd ? `${dtStart} - ${dtEnd}` : dtStart || dtEnd || (current.DTSTAMP || '').trim();
+      dtStart && dtEnd ? `${dtStart} - ${dtEnd}` : dtStart || dtEnd || (current.DTSTAMP || '').trim() || 'Imported';
+    const priorityMatch = (current['X-BUSYBEE-IMPORTANCE'] || '').trim();
+    const parsedPriority = Number.parseInt(priorityMatch, 10);
+    const importance = Number.isNaN(parsedPriority) ? 5 : Math.min(9, Math.max(1, parsedPriority));
+    const dtStamp = (current.DTSTAMP || new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')).trim();
+    const uid = (current.UID || `${Date.now()}-${Math.random().toString(16).slice(2)}@busybee.import`).trim();
+
+    const iCalData = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Busy Bee Calendar//EN',
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${dtStamp}`,
+      current.DTSTART ? `DTSTART:${current.DTSTART}` : '',
+      current.DTEND ? `DTEND:${current.DTEND}` : '',
+      `SUMMARY:${eventName}`,
+      `LOCATION:${eventLocation}`,
+      `CATEGORIES:${eventType}`,
+      `DESCRIPTION:TYPE:${eventType}\\nTIME:${eventTime}\\nLOCATION:${eventLocation}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ]
+      .filter(Boolean)
+      .join('\r\n');
 
     results.push({
-      importance: '5',
-      eventType,
-      eventName,
-      eventTime: eventTime || 'Imported',
-      eventLocation: eventLocation || 'Imported'
+      iCalData,
+      importance
     });
   };
 
