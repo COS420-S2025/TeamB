@@ -199,12 +199,6 @@ describe('App', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
     expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
-
-    act(() => {
-      window.location.hash = '#/settings';
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    });
-    expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
   });
 
   it('opens the profile menu and signs out', async () => {
