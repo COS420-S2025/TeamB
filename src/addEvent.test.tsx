@@ -6,15 +6,23 @@ import '@testing-library/jest-dom';
 import AddEvent from './addEvent';
 
 describe('AddEvent', () => {
+  function renderAddEvent(overrides = {}) {
+    const props = {
+      onBack: jest.fn(),
+      onOpenSettings: jest.fn(),
+      onImportIcsFile: jest.fn(),
+      onCreateEvent: jest.fn(),
+      onDownloadEvents: jest.fn(),
+      canDownloadEvents: false,
+      ...overrides
+    };
+
+    render(<AddEvent {...props} />);
+    return props;
+  }
+
   it('renders the form and decorative header controls', () => {
-    render(
-      <AddEvent
-        onBack={jest.fn()}
-        onCreateEvent={jest.fn()}
-        onDownloadEvents={jest.fn()}
-        canDownloadEvents={false}
-      />
-    );
+    renderAddEvent();
 
     expect(screen.getByRole('banner')).toBeInTheDocument();
     expect(
@@ -26,14 +34,7 @@ describe('AddEvent', () => {
 
   it('calls onBack when Back is clicked', async () => {
     const onBack = jest.fn();
-    render(
-      <AddEvent
-        onBack={onBack}
-        onCreateEvent={jest.fn()}
-        onDownloadEvents={jest.fn()}
-        canDownloadEvents={false}
-      />
-    );
+    renderAddEvent({ onBack });
 
     await userEvent.click(screen.getByRole('button', { name: 'Back to calendar' }));
     expect(onBack).toHaveBeenCalledTimes(1);
@@ -41,14 +42,7 @@ describe('AddEvent', () => {
 
   it('does not call onCreateEvent when fields are incomplete', async () => {
     const onCreateEvent = jest.fn();
-    render(
-      <AddEvent
-        onBack={jest.fn()}
-        onCreateEvent={onCreateEvent}
-        onDownloadEvents={jest.fn()}
-        canDownloadEvents={false}
-      />
-    );
+    renderAddEvent({ onCreateEvent });
 
     await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '9');
     await userEvent.click(screen.getByRole('button', { name: 'Create event' }));
@@ -58,14 +52,7 @@ describe('AddEvent', () => {
   it('calls onCreateEvent and onBack when the form is valid', async () => {
     const onBack = jest.fn();
     const onCreateEvent = jest.fn();
-    render(
-      <AddEvent
-        onBack={onBack}
-        onCreateEvent={onCreateEvent}
-        onDownloadEvents={jest.fn()}
-        canDownloadEvents={false}
-      />
-    );
+    renderAddEvent({ onBack, onCreateEvent });
 
     await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '8');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Lab');
@@ -91,14 +78,7 @@ describe('AddEvent', () => {
   });
 
   it('clears inputs when Clear is clicked', async () => {
-    render(
-      <AddEvent
-        onBack={jest.fn()}
-        onCreateEvent={jest.fn()}
-        onDownloadEvents={jest.fn()}
-        canDownloadEvents={false}
-      />
-    );
+    renderAddEvent();
 
     const importance = screen.getByPlaceholderText('Enter Number Here');
     await userEvent.type(importance, '3');
@@ -110,15 +90,10 @@ describe('AddEvent', () => {
   });
 
   it('uses the header download button', async () => {
-    const onDownloadEvents = jest.fn();
-    render(
-      <AddEvent
-        onBack={jest.fn()}
-        onCreateEvent={jest.fn()}
-        onDownloadEvents={onDownloadEvents}
-        canDownloadEvents={true}
-      />
-    );
+    const { onDownloadEvents } = renderAddEvent({
+      onDownloadEvents: jest.fn(),
+      canDownloadEvents: true
+    });
 
     await userEvent.click(screen.getByRole('button', { name: 'Download' }));
     expect(onDownloadEvents).toHaveBeenCalledTimes(1);

@@ -137,6 +137,7 @@ describe('App', () => {
     const buttons = within(banner).getAllByRole('button');
     expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
       'Add event',
+      'Import .ics file',
       'Download',
       'Toggle delete mode',
       'Open account menu'

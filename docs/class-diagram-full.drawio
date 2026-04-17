@@ -1,0 +1,96 @@
+<mxfile host="app.diagrams.net" modified="2026-04-10T00:00:00.000Z" agent="Cursor" version="22.1.0" type="device">
+  <diagram id="class-diagram-busy-bee" name="Class diagram">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="Busy Bee Calendar — UML class diagram (editable)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="340" y="12" width="440" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce-appEntry" value="&lt;b&gt;ApplicationEntry&lt;/b&gt;&lt;br&gt;&lt;i&gt;«bootstrap»&lt;/i&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;(index.tsx)&lt;br&gt;+main() createRoot, render, vitals&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="380" y="52" width="220" height="92" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce-reportWV" value="&lt;b&gt;reportWebVitals&lt;/b&gt;&lt;br&gt;&lt;i&gt;«module»&lt;/i&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;reportWebVitals.ts&lt;br&gt;+default(onPerfEntry)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="660" y="52" width="220" height="92" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce-addEvent" value="&lt;b&gt;AddEvent&lt;/b&gt;&lt;br&gt;&lt;i&gt;«React FC»&lt;/i&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;-importance: string&lt;br&gt;-eventType: string&lt;br&gt;-eventName: string&lt;br&gt;-eventTime: string&lt;br&gt;-eventLocation: string&lt;/div&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;+render()&lt;br&gt;-handleClear()&lt;br&gt;-handleCreateEvent()&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#555&quot;&gt;addEvent.tsx&lt;/font&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#2e7d32;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="24" y="168" width="258" height="200" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce-addProps" value="&lt;b&gt;AddEventProps&lt;/b&gt;&lt;br&gt;&lt;i&gt;«TypeScript»&lt;/i&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;+onBack(): void&lt;br&gt;+onCreateEvent(event): void&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#555&quot;&gt;props contract&lt;/font&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcedc8;strokeColor=#558b2f;dashed=1;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="24" y="392" width="258" height="108" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce-app" value="&lt;b&gt;App&lt;/b&gt;&lt;br&gt;&lt;i&gt;«React FC»&lt;/i&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;-showAddEvent: boolean&lt;br&gt;-events: CalendarEvent[]&lt;br&gt;-expandedEventId: string | null&lt;br&gt;-googleError: string&lt;br&gt;-user: User | null&lt;br&gt;-isProfileMenuOpen: boolean&lt;br&gt;-googleButtonRef: Ref&lt;br&gt;-profileMenuRef: Ref&lt;/div&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;+render()&lt;br&gt;-handleCreateEvent(newEvent)&lt;br&gt;-handleSignOut()&lt;br&gt;-handleChangeAccount()&lt;br&gt;-toggleEventExpanded(eventId)&lt;br&gt;-getImportanceValue(importance)&lt;br&gt;-renderPriorityEvents(priorityEvents)&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#555&quot;&gt;decodeJwt(), getGoogleClientId()&lt;br&gt;App.tsx&lt;/font&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;strokeColor=#1565c0;strokeWidth=2;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="312" y="148" width="336" height="312" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce-winGoogle" value="&lt;b&gt;WindowGoogle&lt;/b&gt;&lt;br&gt;&lt;i&gt;«external»&lt;/i&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;window.google.accounts.id&lt;br&gt;initialize, renderButton, prompt&lt;br&gt;revoke, disableAutoSelect&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#555&quot;&gt;gsi/client script&lt;/font&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eceff1;strokeColor=#455a64;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="684" y="188" width="232" height="122" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce-calEvent" value="&lt;b&gt;CalendarEvent&lt;/b&gt;&lt;br&gt;&lt;i&gt;«domain / UI model»&lt;/i&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;+id: string&lt;br&gt;+importance: string&lt;br&gt;+eventType: string&lt;br&gt;+eventName: string&lt;br&gt;+eventTime: string&lt;br&gt;+eventLocation: string&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#555&quot;&gt;in-memory; App assigns id&lt;/font&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f9a825;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="248" y="508" width="272" height="172" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce-user" value="&lt;b&gt;User&lt;/b&gt;&lt;br&gt;&lt;i&gt;«domain / session»&lt;/i&gt;&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;font-family:Consolas,monospace&quot;&gt;+name: string&lt;br&gt;+email: string&lt;br&gt;+picture: string&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#555&quot;&gt;from Google JWT&lt;/font&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f9a825;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="548" y="538" width="220" height="132" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce-legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;hr&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px&quot;&gt;Solid arrow: association&lt;br&gt;Dashed arrow: dependency&lt;br&gt;Diamond at App: composition&lt;br&gt;Dashed outline: type contract&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#bdbdbd;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="684" y="340" width="232" height="96" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e-entry-app" value="renders" style="endArrow=block;dashed=1;html=1;endFill=0;strokeColor=#546e7a;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="ce-appEntry" target="ce-app">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e-entry-report" value="calls" style="endArrow=block;dashed=1;html=1;endFill=0;strokeColor=#546e7a;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="ce-appEntry" target="ce-reportWV">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e-app-cal" value="1 — * owns in state" style="startArrow=diamondThin;startFill=1;endArrow=block;html=1;endFill=0;strokeColor=#37474f;exitX=0.35;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="ce-app" target="ce-calEvent">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e-app-user" value="1 — 0..1 user" style="endArrow=block;html=1;endFill=0;strokeColor=#37474f;exitX=0.92;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="ce-app" target="ce-user">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e-app-google" value="Sign-In" style="endArrow=block;dashed=1;html=1;endFill=0;strokeColor=#546e7a;exitX=1;exitY=0.35;exitDx=0;exitDy=0;entryX=0;entryY=0.35;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="ce-app" target="ce-winGoogle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e-app-add" value="showAddEvent" style="endArrow=block;dashed=1;html=1;endFill=0;strokeColor=#546e7a;exitX=0;exitY=0.42;exitDx=0;exitDy=0;entryX=1;entryY=0.42;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="ce-app" target="ce-addEvent">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e-add-app" value="onBack / onCreate" style="endArrow=block;dashed=1;html=1;endFill=0;strokeColor=#546e7a;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.15;entryY=0.12;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="ce-addEvent" target="ce-app">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="153" y="120" />
+              <mxPoint x="260" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e-add-props" value="implements" style="endArrow=block;dashed=1;html=1;endFill=0;strokeColor=#546e7a;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="ce-addEvent" target="ce-addProps">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e-app-calid" value="creates id" style="endArrow=block;dashed=1;html=1;endFill=0;strokeColor=#90a4ae;exitX=0.45;exitY=1;exitDx=0;exitDy=0;entryX=0.65;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" parent="1" source="ce-app" target="ce-calEvent">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="463" y="480" />
+              <mxPoint x="425" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -33,3 +33,5 @@ Run program:
     npm start
 
 AI was used in the creation of this project
+
+This project uses your Google sign-in to authenticate accounts and stores all data on a local Firebase database.

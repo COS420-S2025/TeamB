@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 type AddEventProps = {
   onBack: () => void;
+  onOpenSettings: () => void;
+  onImportIcsFile: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onCreateEvent: (event: [string, number]) => void;
   onDownloadEvents: () => void;
   canDownloadEvents: boolean;
@@ -9,6 +11,8 @@ type AddEventProps = {
 
 const AddEvent: React.FC<AddEventProps> = ({
   onBack,
+  onOpenSettings,
+  onImportIcsFile,
   onCreateEvent,
   onDownloadEvents,
   canDownloadEvents
@@ -18,6 +22,7 @@ const AddEvent: React.FC<AddEventProps> = ({
   const [eventName, setEventName] = useState('');
   const [eventDateTime, setEventDateTime] = useState('');
   const [eventLocation, setEventLocation] = useState('');
+  const icsInputRef = useRef<HTMLInputElement | null>(null);
 
   const escapeIcsText = (value: string) => value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n');
 
@@ -93,13 +98,27 @@ const AddEvent: React.FC<AddEventProps> = ({
     onBack();
   };
 
+  const handleImportIcsClick = () => {
+    icsInputRef.current?.click();
+  };
+
   return (
     <div className="app">
       <header className="header">
-        <div className="header-title">Busy Bee Calendar</div>
+        <button
+          type="button"
+          className="header-title"
+          aria-label="Go to homepage"
+          onClick={onBack}
+        >
+          Busy Bee Calendar
+        </button>
         <div className="header-icons">
           <button type="button" className="icon-button" aria-label="Add event (decorative)">
             +
+          </button>
+          <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
+            &#8681;
           </button>
           <button
             type="button"
@@ -114,7 +133,22 @@ const AddEvent: React.FC<AddEventProps> = ({
             -
           </button>
         </div>
-        <div className="header-bee">🐝</div>
+        <input
+          ref={icsInputRef}
+          type="file"
+          accept=".ics,text/calendar"
+          style={{ display: 'none' }}
+          onChange={onImportIcsFile}
+        />
+        <button
+          type="button"
+          className="header-bee-link"
+          aria-label="Open settings"
+          data-tooltip="Settings"
+          onClick={onOpenSettings}
+        >
+          🐝
+        </button>
       </header>
 
       <main className="screen">
