@@ -181,7 +181,7 @@ describe('App', () => {
     expect(doNowContent).toHaveTextContent('Final exam');
   });
 
-  it('enables the download button on calendar, add-event, and settings pages once events exist', async () => {
+  it('enables download on calendar/add-event and hides it on settings', async () => {
     await renderAppAndSignIn();
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
@@ -204,7 +204,7 @@ describe('App', () => {
       window.location.hash = '#/settings';
       window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
-    expect(screen.getByRole('button', { name: 'Download' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Download' })).not.toBeInTheDocument();
   });
 
   it('opens the profile menu and signs out', async () => {
