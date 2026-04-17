@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import AddEvent from './addEvent.tsx';
-import { parseIcsToEvents } from './icsImport.ts';
+import { parseIcsToEvents } from './icsImport.tsx';
 
 declare global {
   interface Window {
@@ -492,27 +492,6 @@ function App() {
             <a href="#/" className="header-title" aria-label="Go to homepage">
               Settings
             </a>
-            <div className="header-icons">
-              <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
-                &#8681;
-              </button>
-              <button
-                type="button"
-                className="icon-button"
-                aria-label="Download"
-                onClick={handleDownloadEvents}
-                disabled={events.length === 0}
-              >
-                &#8681;
-              </button>
-            </div>
-            <input
-              ref={icsInputRef}
-              type="file"
-              accept=".ics,text/calendar"
-              style={{ display: 'none' }}
-              onChange={handleImportIcsFile}
-            />
             <div className="header-user-controls">
               <a
                 href="#/"
@@ -599,7 +578,7 @@ function App() {
               +
             </button>
             <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
-              &#8681;
+              &#8679;
             </button>
             <button
               type="button"

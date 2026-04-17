@@ -143,4 +143,3 @@ export function parseIcsToEvents(rawText: string): ImportedCalendarEvent[] {
 
   return results;
 }
-

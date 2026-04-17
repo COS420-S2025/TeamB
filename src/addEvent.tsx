@@ -118,7 +118,7 @@ const AddEvent: React.FC<AddEventProps> = ({
             +
           </button>
           <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
-            &#8681;
+            &#8679;
           </button>
           <button
             type="button"
