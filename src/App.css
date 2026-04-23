@@ -266,6 +266,21 @@
   text-align: center;
 }
 
+.firebase-test-button {
+  margin-top: 16px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #ffe476;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.firebase-test-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .auth-state {
   display: flex;
   align-items: center;
