@@ -2124,3 +2124,6 @@ Java HotSpot(TM) 64-Bit Server VM (build 26+35-2893, mixed mode, sharing)
     at Console.log (/Users/jacksonhooper/.cache/firebase/tools/lib/node_modules/winston/lib/winston/transports/console.js:87:23)
     at Console._write (/Users/jacksonhooper/.cache/firebase/tools/lib/node_modules/winston-transport/modern.js:103:17)
     at doWrite (/Users/jacksonhooper/.cache/firebase/tools/lib/node_modules/winston-transport/node_modules/readable-stream/lib/_stream_writable.js:390:139)
+[debug] [2026-04-23T18:34:36.111Z] Apr 23, 2026 2:34:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Apr 23, 2026 2:34:36 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
