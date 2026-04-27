@@ -5,7 +5,7 @@ import AddEvent from './addEvent.tsx';
 import { FirebaseTestButton } from './FirebaseTestButton.tsx';
 import { db } from './firebase-config.tsx';
 import { parseIcsToEvents } from './icsImport.tsx';
-import CalendarView from './CalendarView';
+import CalendarView from './CalendarView.tsx';
 
 declare global {
   interface Window {
