@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import AddEvent from './addEvent.tsx';
 import { parseIcsToEvents } from './icsImport.tsx';
+import CalendarView from './CalendarView';
 
 declare global {
   interface Window {
@@ -70,7 +71,13 @@ function decodeJwt(credential) {
 }
 
 function getCurrentViewFromHash() {
-  return window.location.hash === '#/settings' ? 'settings' : 'calendar';
+  if (window.location.hash === '#/settings') {
+    return 'settings';
+  }
+  if (window.location.hash === '#/month') {
+    return 'month';
+  }
+  return 'calendar';
 }
 
 type EventTuple = [string, number];
@@ -411,6 +418,14 @@ function App() {
     setActiveSettingsPanel(SETTINGS_PANELS.account);
   };
 
+  const handleOpenMonthView = () => {
+    window.location.hash = '#/month';
+    setShowAddEvent(false);
+    setCurrentView('month');
+    setIsProfileMenuOpen(false);
+    setActiveSettingsPanel(SETTINGS_PANELS.account);
+  };
+
   const renderPriorityEvents = (priorityEvents, badgeClassName) => {
     if (priorityEvents.length === 0) {
       return <p className="empty-priority-text">No events yet.</p>;
@@ -562,6 +577,20 @@ function App() {
     );
   }
 
+  if (currentView === 'month') {
+    return (
+      <div className="app-root" style={appColorVars}>
+        <CalendarView
+          events={events}
+          onBack={() => {
+            window.location.hash = '#/';
+            setCurrentView('calendar');
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="app-root" style={appColorVars}>
       <div className="app">
@@ -570,6 +599,15 @@ function App() {
             Busy Bee Calendar
           </a>
           <div className="header-icons">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Calendar month view"
+              onClick={handleOpenMonthView}
+              title="Calendar"
+            >
+              📅
+            </button>
             <button
               type="button"
               className="icon-button"
