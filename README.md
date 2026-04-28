@@ -26,10 +26,10 @@ Navigate to Project Folder:
 
 Install Dependencies:
 
-    npm Install
-    npm Install Firebase
-    npm Install util
-    npm Install web-streams-polyfill
+    npm install
+    npm install Firebase
+    npm install util
+    npm install web-streams-polyfill
 
 Run program (each command in a separate terminal):
 
