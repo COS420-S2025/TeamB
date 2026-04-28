@@ -136,6 +136,7 @@ describe('App', () => {
     const banner = screen.getByRole('banner');
     const buttons = within(banner).getAllByRole('button');
     expect(buttons.map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Calendar month view',
       'Add event',
       'Import .ics file',
       'Download',

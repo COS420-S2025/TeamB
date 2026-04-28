@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
+import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import AddEvent from './addEvent.tsx';
+import { FirebaseTestButton } from './FirebaseTestButton.tsx';
+import { db } from './firebase-config.tsx';
 import { parseIcsToEvents } from './icsImport.tsx';
+import CalendarView from './CalendarView.tsx';
 
 declare global {
   interface Window {
@@ -70,7 +74,13 @@ function decodeJwt(credential) {
 }
 
 function getCurrentViewFromHash() {
-  return window.location.hash === '#/settings' ? 'settings' : 'calendar';
+  if (window.location.hash === '#/settings') {
+    return 'settings';
+  }
+  if (window.location.hash === '#/month') {
+    return 'month';
+  }
+  return 'calendar';
 }
 
 type EventTuple = [string, number];
@@ -239,6 +249,63 @@ function App() {
       window.google.accounts.id.prompt();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.email) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadStoredEvents = async () => {
+      try {
+        const usersQuery = query(
+          collection(db, 'users'),
+          where('email', '==', user.email),
+          limit(1)
+        );
+        const usersSnapshot = await getDocs(usersQuery);
+        if (isCancelled || usersSnapshot.empty) {
+          return;
+        }
+
+        const userData = usersSnapshot.docs[0].data();
+        const storedEvents = Array.isArray(userData.events) ? userData.events : [];
+        const normalizedEvents = storedEvents
+          .filter((eventItem) => eventItem && typeof eventItem === 'object')
+          .map((eventItem, index) => {
+            const eventRecord = eventItem as {
+              id?: string;
+              iCalData?: string;
+              importance?: number | string;
+            };
+            const parsedImportance =
+              typeof eventRecord.importance === 'number'
+                ? eventRecord.importance
+                : Number.parseInt(`${eventRecord.importance ?? ''}`, 10);
+
+            return {
+              id: eventRecord.id || `${Date.now()}-${index}`,
+              iCalData: eventRecord.iCalData || '',
+              importance: Number.isFinite(parsedImportance) ? parsedImportance : 5
+            };
+          })
+          .filter((eventItem) => eventItem.iCalData);
+
+        if (!isCancelled) {
+          setEvents(normalizedEvents);
+        }
+      } catch (error) {
+        // Keep login flow resilient even if Firestore is unavailable.
+      }
+    };
+
+    loadStoredEvents();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user?.email]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -411,6 +478,14 @@ function App() {
     setActiveSettingsPanel(SETTINGS_PANELS.account);
   };
 
+  const handleOpenMonthView = () => {
+    window.location.hash = '#/month';
+    setShowAddEvent(false);
+    setCurrentView('month');
+    setIsProfileMenuOpen(false);
+    setActiveSettingsPanel(SETTINGS_PANELS.account);
+  };
+
   const renderPriorityEvents = (priorityEvents, badgeClassName) => {
     if (priorityEvents.length === 0) {
       return <p className="empty-priority-text">No events yet.</p>;
@@ -528,6 +603,7 @@ function App() {
                     <h2 className="auth-title">Account Settings</h2>
                     <p className="auth-subtitle">Signed in as {user.name}</p>
                     {user.email ? <p className="auth-text">{user.email}</p> : null}
+                    <FirebaseTestButton userEmail={user.email || ''} events={events} />
                   </section>
                 ) : (
                   <section className="auth-card">
@@ -562,6 +638,20 @@ function App() {
     );
   }
 
+  if (currentView === 'month') {
+    return (
+      <div className="app-root" style={appColorVars}>
+        <CalendarView
+          events={events}
+          onBack={() => {
+            window.location.hash = '#/';
+            setCurrentView('calendar');
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="app-root" style={appColorVars}>
       <div className="app">
@@ -570,6 +660,15 @@ function App() {
             Busy Bee Calendar
           </a>
           <div className="header-icons">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Calendar month view"
+              onClick={handleOpenMonthView}
+              title="Calendar"
+            >
+              📅
+            </button>
             <button
               type="button"
               className="icon-button"
