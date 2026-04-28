@@ -26,11 +26,16 @@ Navigate to Project Folder:
 
 Install Dependencies:
 
-    npm Install
+    npm install
+    npm install Firebase
+    npm install util
+    npm install web-streams-polyfill
 
-Run program:
+Run program (each command in a separate terminal):
 
+    firebase emulators:start
     npm start
+    
 
 AI was used in the creation of this project
 
