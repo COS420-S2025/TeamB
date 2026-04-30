@@ -136,12 +136,13 @@ export default function CalendarView({
     <div className="app-root">
       <div className="app">
         <header className="header">
-          <button type="button" className="header-title" onClick={onBack} aria-label="Go back">
-            2026 Calendar
-          </button>
+          <span className="header-title">2026 Calendar</span>
         </header>
 
         <main className="screen">
+          <button type="button" className="back-button" onClick={onBack} aria-label="Go back to calendar">
+            &#8630;
+          </button>
           <section className="calendar-toolbar">
             <button
               type="button"

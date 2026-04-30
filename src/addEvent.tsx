@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 type AddEventProps = {
   onBack: () => void;
@@ -7,6 +7,13 @@ type AddEventProps = {
   onCreateEvent: (event: [string, number]) => void;
   onDownloadEvents: () => void;
   canDownloadEvents: boolean;
+  initialEventData?: {
+    importance: string;
+    eventType: string;
+    eventName: string;
+    eventDateTime: string;
+    eventLocation: string;
+  };
 };
 
 const AddEvent: React.FC<AddEventProps> = ({
@@ -15,7 +22,8 @@ const AddEvent: React.FC<AddEventProps> = ({
   onImportIcsFile,
   onCreateEvent,
   onDownloadEvents,
-  canDownloadEvents
+  canDownloadEvents,
+  initialEventData
 }) => {
   const [importance, setImportance] = useState('');
   const [eventType, setEventType] = useState('');
@@ -62,7 +70,7 @@ const AddEvent: React.FC<AddEventProps> = ({
     }
 
     const parsedImportance = Number.parseInt(trimmedImportance, 10);
-    if (Number.isNaN(parsedImportance)) {
+    if (Number.isNaN(parsedImportance) || parsedImportance < 1 || parsedImportance > 10) {
       return;
     }
 
@@ -102,6 +110,18 @@ const AddEvent: React.FC<AddEventProps> = ({
     icsInputRef.current?.click();
   };
 
+  useEffect(() => {
+    if (!initialEventData) {
+      return;
+    }
+
+    setImportance(initialEventData.importance);
+    setEventType(initialEventData.eventType);
+    setEventName(initialEventData.eventName);
+    setEventDateTime(initialEventData.eventDateTime);
+    setEventLocation(initialEventData.eventLocation);
+  }, [initialEventData]);
+
   return (
     <div className="app">
       <header className="header">
@@ -118,7 +138,7 @@ const AddEvent: React.FC<AddEventProps> = ({
             +
           </button>
           <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
-            &#8679;
+            &#8593;
           </button>
           <button
             type="button"
@@ -127,7 +147,7 @@ const AddEvent: React.FC<AddEventProps> = ({
             onClick={onDownloadEvents}
             disabled={!canDownloadEvents}
           >
-            &#8681;
+            &#8595;
           </button>
           <button type="button" className="icon-button" aria-label="Remove (decorative)">
             -
@@ -163,7 +183,11 @@ const AddEvent: React.FC<AddEventProps> = ({
             <div className="field-label-pill">Select importance:</div>
             <input
               className="field-input-pill"
-              placeholder="Enter Number Here"
+              type="number"
+              min={1}
+              max={10}
+              step={1}
+              placeholder="Enter number from 1 to 10"
               value={importance}
               onChange={(event) => setImportance(event.target.value)}
             />

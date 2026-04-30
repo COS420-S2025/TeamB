@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
-import { collection, getDocs, limit, query, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, limit, query, serverTimestamp, setDoc, where } from 'firebase/firestore';
 import AddEvent from './addEvent.tsx';
 import { FirebaseTestButton } from './FirebaseTestButton.tsx';
 import { db } from './firebase-config.tsx';
@@ -89,6 +89,7 @@ type CalendarEvent = {
   id: string;
   iCalData: string;
   importance: number;
+  createdAt: string;
 };
 
 type ParsedEventDetails = {
@@ -96,6 +97,15 @@ type ParsedEventDetails = {
   eventType: string;
   eventTime: string;
   eventLocation: string;
+};
+
+type EditableEvent = {
+  id: string;
+  importance: number;
+  eventName: string;
+  eventType: string;
+  eventLocation: string;
+  eventDateTime: string;
 };
 
 function unescapeIcsText(value = '') {
@@ -111,6 +121,76 @@ function formatIcsDateTimeForDisplay(icsDateTime: string) {
 
   const [, year, month, day, hour, minute] = match;
   return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
+function formatIcsDateTimeForInput(icsDateTime: string) {
+  const trimmedValue = icsDateTime.trim();
+  const match = trimmedValue.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);
+  if (!match) {
+    return '';
+  }
+
+  const [, year, month, day, hour, minute] = match;
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
+function parseIcsDateTimeToDate(icsDateTime: string) {
+  const trimmedValue = icsDateTime.trim();
+  const match = trimmedValue.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);
+  if (!match) {
+    return null;
+  }
+
+  const [, year, month, day, hour, minute] = match;
+  const parsedDate = new Date(
+    Number.parseInt(year, 10),
+    Number.parseInt(month, 10) - 1,
+    Number.parseInt(day, 10),
+    Number.parseInt(hour, 10),
+    Number.parseInt(minute, 10),
+    0
+  );
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+  return parsedDate;
+}
+
+function getTimeAdjustedImportance(event: CalendarEvent, nowMs: number) {
+  const startingImportance = Math.min(10, Math.max(1, event.importance));
+  const incrementsAvailable = 10 - startingImportance;
+  if (incrementsAvailable <= 0) {
+    return startingImportance;
+  }
+
+  const dtStartMatch = event.iCalData.match(/^DTSTART(?::|;[^:]*:)(.*)$/m);
+  if (!dtStartMatch) {
+    return startingImportance;
+  }
+
+  const targetDate = parseIcsDateTimeToDate(dtStartMatch[1]);
+  if (!targetDate) {
+    return startingImportance;
+  }
+
+  const createdAtDate = new Date(event.createdAt);
+  if (Number.isNaN(createdAtDate.getTime())) {
+    return startingImportance;
+  }
+
+  const totalDurationMs = targetDate.getTime() - createdAtDate.getTime();
+  if (totalDurationMs <= 0) {
+    return 10;
+  }
+
+  const elapsedMs = Math.max(0, nowMs - createdAtDate.getTime());
+  const stepDurationMs = totalDurationMs / incrementsAvailable;
+  if (stepDurationMs <= 0) {
+    return startingImportance;
+  }
+
+  const completedSteps = Math.floor(elapsedMs / stepDurationMs);
+  return Math.min(10, startingImportance + completedSteps);
 }
 
 function parseEventDetailsFromIcs(iCalData: string): ParsedEventDetails {
@@ -151,6 +231,8 @@ function App() {
   const [isAvatarBroken, setIsAvatarBroken] = useState(false);
   const [activeSettingsPanel, setActiveSettingsPanel] = useState(SETTINGS_PANELS.account);
   const [colorProfile, setColorProfile] = useState('default');
+  const [editingEvent, setEditingEvent] = useState<EditableEvent | null>(null);
+  const [currentTimeMs, setCurrentTimeMs] = useState(Date.now());
   const googleButtonRef = useRef(null);
   const profileMenuRef = useRef(null);
   const icsInputRef = useRef<HTMLInputElement | null>(null);
@@ -278,6 +360,7 @@ function App() {
               id?: string;
               iCalData?: string;
               importance?: number | string;
+              createdAt?: string;
             };
             const parsedImportance =
               typeof eventRecord.importance === 'number'
@@ -287,7 +370,11 @@ function App() {
             return {
               id: eventRecord.id || `${Date.now()}-${index}`,
               iCalData: eventRecord.iCalData || '',
-              importance: Number.isFinite(parsedImportance) ? parsedImportance : 5
+              importance: Number.isFinite(parsedImportance) ? parsedImportance : 5,
+              createdAt:
+                typeof eventRecord.createdAt === 'string' && eventRecord.createdAt
+                  ? eventRecord.createdAt
+                  : new Date().toISOString()
             };
           })
           .filter((eventItem) => eventItem.iCalData);
@@ -310,6 +397,7 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       setShowAddEvent(false);
+      setEditingEvent(null);
       setCurrentView(getCurrentViewFromHash());
       setIsProfileMenuOpen(false);
       setActiveSettingsPanel(SETTINGS_PANELS.account);
@@ -322,6 +410,14 @@ function App() {
   useEffect(() => {
     setIsAvatarBroken(false);
   }, [user?.picture]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTimeMs(Date.now());
+    }, 60 * 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (!isProfileMenuOpen) {
@@ -368,10 +464,50 @@ function App() {
 
   const handleCreateEvent = (newEvent: EventTuple) => {
     const [iCalData, importance] = newEvent;
-    setEvents((previousEvents) => [
-      ...previousEvents,
-      { id: Date.now().toString(), iCalData, importance }
-    ]);
+    const newId = Date.now().toString();
+    const filteredEvents = editingEvent
+      ? events.filter((event) => event.id !== editingEvent.id)
+      : events;
+    const nextEvents = [
+      ...filteredEvents,
+      { id: newId, iCalData, importance, createdAt: new Date().toISOString() }
+    ];
+    setEvents(nextEvents);
+    setEditingEvent(null);
+    void saveEventsToFirestore(nextEvents);
+  };
+
+  const saveEventsToFirestore = async (eventsToSave: CalendarEvent[]) => {
+    if (!user?.email) {
+      return;
+    }
+
+    const payload = {
+      email: user.email,
+      events: eventsToSave,
+      updatedAt: serverTimestamp()
+    };
+
+    try {
+      const existingUserQuery = query(
+        collection(db, 'users'),
+        where('email', '==', user.email),
+        limit(1)
+      );
+      const existingUserSnapshot = await getDocs(existingUserQuery);
+
+      if (!existingUserSnapshot.empty) {
+        const existingDocRef = doc(db, 'users', existingUserSnapshot.docs[0].id);
+        await setDoc(existingDocRef, payload);
+      } else {
+        await addDoc(collection(db, 'users'), {
+          ...payload,
+          createdAt: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      // Keep event actions responsive even if Firestore write fails.
+    }
   };
 
   const handleImportIcsClick = () => {
@@ -401,7 +537,8 @@ function App() {
         ...imported.map((importedEvent, index) => ({
           id: `${base}-${index}`,
           iCalData: importedEvent.iCalData,
-          importance: importedEvent.importance
+          importance: importedEvent.importance,
+          createdAt: new Date(base + index).toISOString()
         }))
       ]);
 
@@ -416,8 +553,27 @@ function App() {
   };
 
   const handleRemoveEvent = (eventId: string) => {
-    setEvents((previousEvents) => previousEvents.filter((event) => event.id !== eventId));
+    const nextEvents = events.filter((event) => event.id !== eventId);
+    setEvents(nextEvents);
     setExpandedEventId((currentId) => (currentId === eventId ? null : currentId));
+    void saveEventsToFirestore(nextEvents);
+  };
+
+  const handleEditEvent = (eventToEdit: CalendarEvent) => {
+    const parsedEvent = parseEventDetailsFromIcs(eventToEdit.iCalData);
+    const dtStartMatch = eventToEdit.iCalData.match(/^DTSTART(?::|;[^:]*:)(.*)$/m);
+    const formattedDateTime = dtStartMatch ? formatIcsDateTimeForInput(dtStartMatch[1]) : '';
+
+    setEditingEvent({
+      id: eventToEdit.id,
+      importance: eventToEdit.importance,
+      eventName: parsedEvent.eventName,
+      eventType: parsedEvent.eventType,
+      eventLocation: parsedEvent.eventLocation,
+      eventDateTime: formattedDateTime
+    });
+    setShowAddEvent(true);
+    setExpandedEventId(null);
   };
 
   const toggleDeleteMode = () => {
@@ -456,9 +612,13 @@ function App() {
     URL.revokeObjectURL(downloadUrl);
   };
 
-  const doNowEvents = events.filter((event) => event.importance >= 8);
-  const thinkAboutEvents = events.filter((event) => event.importance >= 4 && event.importance <= 7);
-  const canWaitEvents = events.filter((event) => event.importance <= 3);
+  const eventsWithAdjustedImportance = events.map((event) => ({
+    ...event,
+    importance: getTimeAdjustedImportance(event, currentTimeMs)
+  }));
+  const doNowEvents = eventsWithAdjustedImportance.filter((event) => event.importance >= 8);
+  const thinkAboutEvents = eventsWithAdjustedImportance.filter((event) => event.importance >= 4 && event.importance <= 7);
+  const canWaitEvents = eventsWithAdjustedImportance.filter((event) => event.importance <= 3);
   const colorProfileOptions = Object.entries(COLOR_PROFILES);
 
   const handleColorProfileToggle = (profileKey) => {
@@ -503,24 +663,37 @@ function App() {
             <span>{parsedEvent.eventName}</span>
             <span className={`badge ${badgeClassName}`}>{event.importance}</span>
           </div>
-          {isDeleteModeEnabled ? (
-            <button
-              type="button"
-              className="event-delete-button"
-              onClick={(eventClick) => {
-                eventClick.stopPropagation();
-                handleRemoveEvent(event.id);
-              }}
-              aria-label={`Delete ${parsedEvent.eventName}`}
-            >
-              Delete
-            </button>
-          ) : null}
           {expandedEventId === event.id ? (
             <div className="event-card-details">
               <p><strong>Type:</strong> {parsedEvent.eventType}</p>
               <p><strong>Time:</strong> {parsedEvent.eventTime}</p>
               <p><strong>Location:</strong> {parsedEvent.eventLocation}</p>
+            </div>
+          ) : null}
+          {isDeleteModeEnabled ? (
+            <div className="event-action-buttons">
+              <button
+                type="button"
+                className="event-edit-button"
+                onClick={(eventClick) => {
+                  eventClick.stopPropagation();
+                  handleEditEvent(event);
+                }}
+                aria-label={`Edit ${parsedEvent.eventName}`}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className="event-delete-button"
+                onClick={(eventClick) => {
+                  eventClick.stopPropagation();
+                  handleRemoveEvent(event.id);
+                }}
+                aria-label={`Delete ${parsedEvent.eventName}`}
+              >
+                Delete
+              </button>
             </div>
           ) : null}
         </div>
@@ -550,12 +723,26 @@ function App() {
   if (showAddEvent) {
     return (
       <AddEvent
-        onBack={() => setShowAddEvent(false)}
+        onBack={() => {
+          setShowAddEvent(false);
+          setEditingEvent(null);
+        }}
         onOpenSettings={handleOpenSettings}
         onImportIcsFile={handleImportIcsFile}
         onCreateEvent={handleCreateEvent}
         onDownloadEvents={handleDownloadEvents}
         canDownloadEvents={events.length > 0}
+        initialEventData={
+          editingEvent
+            ? {
+                importance: `${editingEvent.importance}`,
+                eventType: editingEvent.eventType,
+                eventName: editingEvent.eventName,
+                eventDateTime: editingEvent.eventDateTime,
+                eventLocation: editingEvent.eventLocation
+              }
+            : undefined
+        }
       />
     );
   }
@@ -580,6 +767,19 @@ function App() {
             </div>
           </header>
           <main className="screen">
+            <button
+              type="button"
+              className="back-button"
+              onClick={() => {
+                window.location.hash = '#/';
+                setCurrentView('calendar');
+                setIsProfileMenuOpen(false);
+                setActiveSettingsPanel(SETTINGS_PANELS.account);
+              }}
+              aria-label="Go back to calendar"
+            >
+              &#8630;
+            </button>
             <section className="settings-layout">
               <aside className="settings-sidebar">
                 <button
@@ -642,7 +842,7 @@ function App() {
     return (
       <div className="app-root" style={appColorVars}>
         <CalendarView
-          events={events}
+          events={eventsWithAdjustedImportance}
           onBack={() => {
             window.location.hash = '#/';
             setCurrentView('calendar');
@@ -673,12 +873,15 @@ function App() {
               type="button"
               className="icon-button"
               aria-label="Add event"
-              onClick={() => setShowAddEvent(true)}
+              onClick={() => {
+                setEditingEvent(null);
+                setShowAddEvent(true);
+              }}
             >
               +
             </button>
             <button type="button" className="icon-button" aria-label="Import .ics file" onClick={handleImportIcsClick}>
-              &#8679;
+              &#8593;
             </button>
             <button
               type="button"
@@ -687,7 +890,7 @@ function App() {
               onClick={handleDownloadEvents}
               disabled={events.length === 0}
             >
-              &#8681;
+              &#8595;
             </button>
             <button
               type="button"
