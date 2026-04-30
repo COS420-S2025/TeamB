@@ -29,7 +29,7 @@ describe('AddEvent', () => {
       screen.getByRole('button', { name: /add event \(decorative\)/i })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back to calendar' })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Enter Number Here')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Enter number from 1 to 10')).toBeInTheDocument();
   });
 
   it('calls onBack when Back is clicked', async () => {
@@ -44,7 +44,7 @@ describe('AddEvent', () => {
     const onCreateEvent = jest.fn();
     renderAddEvent({ onCreateEvent });
 
-    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '9');
+    await userEvent.type(screen.getByPlaceholderText('Enter number from 1 to 10'), '9');
     await userEvent.click(screen.getByRole('button', { name: 'Create event' }));
     expect(onCreateEvent).not.toHaveBeenCalled();
   });
@@ -54,7 +54,7 @@ describe('AddEvent', () => {
     const onCreateEvent = jest.fn();
     renderAddEvent({ onBack, onCreateEvent });
 
-    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '8');
+    await userEvent.type(screen.getByPlaceholderText('Enter number from 1 to 10'), '8');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Lab');
     await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Chem lab');
     fireEvent.change(screen.getByLabelText('Event date and time'), {
@@ -80,12 +80,12 @@ describe('AddEvent', () => {
   it('clears inputs when Clear is clicked', async () => {
     renderAddEvent();
 
-    const importance = screen.getByPlaceholderText('Enter Number Here');
+    const importance = screen.getByPlaceholderText('Enter number from 1 to 10');
     await userEvent.type(importance, '3');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Meetup');
     await userEvent.click(screen.getByRole('button', { name: 'Clear' }));
 
-    expect(importance).toHaveValue('');
+    expect(importance).toHaveValue(null);
     expect(screen.getByPlaceholderText('Enter Type Here')).toHaveValue('');
   });
 

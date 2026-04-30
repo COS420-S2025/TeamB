@@ -11,6 +11,18 @@ import {
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import App from './App';
+import { addDoc, doc, getDocs } from 'firebase/firestore';
+
+jest.mock('firebase/firestore', () => {
+  const actual = jest.requireActual('firebase/firestore');
+  return {
+    ...actual,
+    addDoc: jest.fn(),
+    getDocs: jest.fn(),
+    setDoc: jest.fn(),
+    doc: jest.fn()
+  };
+});
 
 const originalGoogleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
@@ -41,6 +53,18 @@ function installGoogleMock() {
       }
     }
   };
+}
+
+function mockEmptyUserDoc() {
+  (getDocs as jest.Mock).mockResolvedValue({ empty: true, docs: [] });
+}
+
+function mockUserDocWithEvents(events: unknown[], docId = 'user-doc-1') {
+  (getDocs as jest.Mock).mockResolvedValue({
+    empty: false,
+    docs: [{ id: docId, data: () => ({ events }) }]
+  });
+  (doc as jest.Mock).mockReturnValue({ id: docId });
 }
 
 function triggerGoogleClientScriptLoad() {
@@ -162,7 +186,7 @@ describe('App', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
 
-    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '9');
+    await userEvent.type(screen.getByPlaceholderText('Enter number from 1 to 10'), '9');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Exam');
     await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Final exam');
     fireEvent.change(screen.getByLabelText('Event date and time'), {
@@ -186,7 +210,7 @@ describe('App', () => {
     await renderAppAndSignIn();
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
-    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '9');
+    await userEvent.type(screen.getByPlaceholderText('Enter number from 1 to 10'), '9');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Exam');
     await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Final exam');
     fireEvent.change(screen.getByLabelText('Event date and time'), {
@@ -245,7 +269,7 @@ describe('App', () => {
     await renderAppAndSignIn();
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
-    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '5');
+    await userEvent.type(screen.getByPlaceholderText('Enter number from 1 to 10'), '5');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Homework');
     await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Essay');
     fireEvent.change(screen.getByLabelText('Event date and time'), {
@@ -269,7 +293,7 @@ describe('App', () => {
     await renderAppAndSignIn();
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
-    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '8');
+    await userEvent.type(screen.getByPlaceholderText('Enter number from 1 to 10'), '8');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Meeting');
     await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Sprint sync');
     fireEvent.change(screen.getByLabelText('Event date and time'), {
@@ -289,7 +313,7 @@ describe('App', () => {
     await renderAppAndSignIn();
 
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
-    await userEvent.type(screen.getByPlaceholderText('Enter Number Here'), '8');
+    await userEvent.type(screen.getByPlaceholderText('Enter number from 1 to 10'), '8');
     await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Meeting');
     await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'Planning');
     fireEvent.change(screen.getByLabelText('Event date and time'), {
@@ -368,5 +392,115 @@ describe('App', () => {
     expect(appRoot.style.getPropertyValue('--priority-now-color')).toBe('#e74c3c');
     expect(appRoot.style.getPropertyValue('--priority-mid-color')).toBe('#f1a23c');
     expect(appRoot.style.getPropertyValue('--priority-late-color')).toBe('#3aa655');
+  });
+
+  it('edits an event and replaces old values with new values', async () => {
+    mockUserDocWithEvents([
+      {
+        id: 'evt-1',
+        importance: 6,
+        createdAt: '2026-04-01T12:00:00.000Z',
+        iCalData: [
+          'BEGIN:VCALENDAR',
+          'BEGIN:VEVENT',
+          'SUMMARY:Old title',
+          'LOCATION:Old room',
+          'CATEGORIES:Quiz',
+          'DTSTART:20260420T120000',
+          'DESCRIPTION:TYPE:Quiz\\nTIME:2026-04-20 12:00\\nLOCATION:Old room',
+          'END:VEVENT',
+          'END:VCALENDAR'
+        ].join('\r\n')
+      }
+    ]);
+
+    await renderAppAndSignIn();
+    await waitFor(() => expect(screen.getByText('Old title')).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Toggle delete mode' }));
+    await userEvent.click(screen.getByRole('button', { name: /Edit Old title/i }));
+
+    const nameInput = screen.getByPlaceholderText('Enter Name:');
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, 'New title');
+    await userEvent.click(screen.getByRole('button', { name: 'Create event' }));
+
+    await waitFor(() => expect(screen.getByText('New title')).toBeInTheDocument());
+    expect(screen.queryByText('Old title')).not.toBeInTheDocument();
+  });
+
+  it('loads events from Firestore after sign-in', async () => {
+    mockUserDocWithEvents([
+      {
+        id: 'evt-a',
+        importance: 8,
+        createdAt: '2026-04-01T12:00:00.000Z',
+        iCalData: [
+          'BEGIN:VCALENDAR',
+          'BEGIN:VEVENT',
+          'SUMMARY:Loaded from DB',
+          'DTSTART:20260425T090000',
+          'END:VEVENT',
+          'END:VCALENDAR'
+        ].join('\r\n')
+      }
+    ]);
+
+    await renderAppAndSignIn();
+
+    await waitFor(() => expect(screen.getByText('Loaded from DB')).toBeInTheDocument());
+    expect(getDocs).toHaveBeenCalled();
+  });
+
+  it('writes updated events to Firestore when creating an event', async () => {
+    mockEmptyUserDoc();
+
+    await renderAppAndSignIn();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
+    await userEvent.type(screen.getByPlaceholderText('Enter number from 1 to 10'), '9');
+    await userEvent.type(screen.getByPlaceholderText('Enter Type Here'), 'Exam');
+    await userEvent.type(screen.getByPlaceholderText('Enter Name:'), 'DB write test');
+    fireEvent.change(screen.getByLabelText('Event date and time'), {
+      target: { value: '2026-05-16T15:00' }
+    });
+    await userEvent.type(screen.getByPlaceholderText('Enter Location:'), 'Hall A');
+    await userEvent.click(screen.getByRole('button', { name: 'Create event' }));
+
+    await waitFor(() => expect(addDoc).toHaveBeenCalled());
+  });
+
+  it('places events into Do Now, Think About, and Can Wait by importance', async () => {
+    mockUserDocWithEvents([
+      {
+        id: 'now-1',
+        importance: 9,
+        createdAt: '2026-04-01T12:00:00.000Z',
+        iCalData: 'BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nSUMMARY:Now event\r\nDTSTART:20280501T100000\r\nEND:VEVENT\r\nEND:VCALENDAR'
+      },
+      {
+        id: 'mid-1',
+        importance: 5,
+        createdAt: '2026-04-01T12:00:00.000Z',
+        iCalData: 'BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nSUMMARY:Mid event\r\nDTSTART:20280501T100000\r\nEND:VEVENT\r\nEND:VCALENDAR'
+      },
+      {
+        id: 'low-1',
+        importance: 2,
+        createdAt: '2026-04-01T12:00:00.000Z',
+        iCalData: 'BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nSUMMARY:Low event\r\nDTSTART:20280501T100000\r\nEND:VEVENT\r\nEND:VCALENDAR'
+      }
+    ]);
+
+    await renderAppAndSignIn();
+    await waitFor(() => expect(screen.getByText('Now event')).toBeInTheDocument());
+
+    const doNowSection = screen.getByText('Do Now').closest('section')?.nextElementSibling;
+    const thinkSection = screen.getByText('Something To Think About').closest('section')?.nextElementSibling;
+    const waitSection = screen.getByText('You Can Wait').closest('section')?.nextElementSibling;
+
+    expect(doNowSection).toHaveTextContent('Now event');
+    expect(thinkSection).toHaveTextContent('Mid event');
+    expect(waitSection).toHaveTextContent('Low event');
   });
 });
